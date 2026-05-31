@@ -4,7 +4,7 @@ Scenario Manager Module for Raspberry Pi Robot.
 Provides ScenarioManager, Scenario, and ScenarioStep classes for creating,
 running, and managing motor command sequences (scenarios) with JSON persistence.
 
-Scenarios are stored as JSON files in /home/user/program/scenarios/.
+Scenarios are stored as JSON files in <project_root>/scenarios/.
 """
 
 import json
@@ -12,30 +12,54 @@ import logging
 import os
 import threading
 import time
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-SCENARIOS_DIR = "/home/user/program/scenarios"
+SCENARIOS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scenarios")
 
 
 class ScenarioStep:
     """Represents a single step in a scenario with motor commands and duration."""
 
-    def __init__(self, motors: Dict[str, int], duration: int):
+    def __init__(self, motors: Dict[str, Any], duration: int):
         """
         Initialize a ScenarioStep.
 
         Args:
-            motors: Dict with keys M1, M2, S1, S2 and integer speed/position values.
+            motors: Dict with motor/direction commands. Supported keys (case-insensitive):
+                    m1, m2, m3, m4   — DC motor speeds (-255..255)
+                    s1, s2           — servo angles (0..180)
+                    direction        — direction preset key (F, B, L, R, FL, etc.)
+                    speed            — speed scale for direction presets (0..100)
             duration: Duration of this step in milliseconds.
+
+        Keys are normalised to lowercase so that execute_move receives
+        the format it expects (fixes F12 — M1/M2 vs m1/m2 case mismatch).
+        direction and speed fields are also preserved (F14).
         """
-        self.motors: Dict[str, int] = {
-            "M1": motors.get("M1", 0),
-            "M2": motors.get("M2", 0),
-            "S1": motors.get("S1", 0),
-            "S2": motors.get("S2", 0),
-        }
+        # Normalise all keys to lowercase (F12)
+        raw = {k.lower(): v for k, v in motors.items()}
+
+        # Build the motors dict with known motor/servo keys, dropping None values
+        self.motors: Dict[str, Any] = {}
+
+        # DC motors (F12: accept both M1/m1 via normalisation above)
+        for key in ("m1", "m2", "m3", "m4"):
+            if key in raw and raw[key] is not None:
+                self.motors[key] = raw[key]
+
+        # Servo angles
+        for key in ("s1", "s2"):
+            if key in raw and raw[key] is not None:
+                self.motors[key] = raw[key]
+
+        # Direction preset support (F14)
+        if "direction" in raw and raw["direction"] is not None:
+            self.motors["direction"] = raw["direction"]
+        if "speed" in raw and raw["speed"] is not None:
+            self.motors["speed"] = raw["speed"]
+
         self.duration: int = duration
 
     def to_dict(self) -> dict:

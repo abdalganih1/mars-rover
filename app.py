@@ -25,6 +25,7 @@ from modules.camera import CameraManager
 from modules.motors import MotorController
 from modules.sensors import SensorManager
 from modules.scenarios import ScenarioManager
+from modules import sensors as sensors_mod
 
 # ══════════════════════ تحميل الإعدادات ══════════════════════
 
@@ -50,6 +51,9 @@ if server_cfg.get("cors_enabled", True):
     CORS(app)
 
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+
+# ربط SocketIO بوحدة الحساسات (F6)
+sensors_mod.init_socketio(socketio)
 
 # ══════════════════════ إعداد السجلات ══════════════════════
 
@@ -83,9 +87,12 @@ motor_controller = MotorController(bt_manager, socketio)
 sensor_manager = SensorManager()
 scenario_manager = ScenarioManager(motor_controller, bt_manager, socketio)
 
-# تسجيل SocketIO في الوحدات
+# تسجيل SocketIO في BluetoothManager
 bt_manager._socketio = socketio
-sensor_manager._socketio = socketio  # direct attribute
+# ملاحظة: sensor_manager._socketio لا أثر له — الإرسال يتم عبر sensors_mod._socketio (init_socketio)
+
+# ربط sensor_manager بـ BluetoothManager لتوجيه القراءات (F7)
+bt_manager._sensor_manager = sensor_manager
 
 # تحميل الحساسات الافتراضية
 sensor_manager.load_default_sensors()
@@ -431,8 +438,8 @@ def _emit_sensor_list():
             "name": s.name,
             "unit": s.unit,
             "icon": s.icon,
-            "min_value": s.min_value,
-            "max_value": s.max_value,
+            "min_value": s.min_val,
+            "max_value": s.max_val,
             "warn_high": s.warn_high,
             "warn_low": s.warn_low,
             "color": getattr(s, "color", "#00b4d8"),
@@ -555,6 +562,70 @@ def handle_scenario_delete(data):
 def handle_scenario_list():
     """قائمة السيناريوهات"""
     emit("scenarios_list", scenario_manager.list_scenarios())
+
+
+# ─────────── معايرة EEPROM (F8) ───────────
+
+@socketio.on("calib_run_port")
+def handle_calib_run_port(data):
+    """تشغيل منفذ فيزيائي مفرد للمعايرة"""
+    bt_manager.send_json({"cal": "port", "port": data.get("port", 1),
+                          "spd": data.get("spd", 150), "ms": data.get("ms", 700)})
+
+
+@socketio.on("calib_set_map")
+def handle_calib_set_map(data):
+    """تعيين ربط العجلات المنطقية بالمنافذ"""
+    bt_manager.send_json({"cfg": "map", "FL": data["FL"], "FR": data["FR"],
+                          "RL": data["RL"], "RR": data["RR"]})
+
+
+@socketio.on("calib_test_dir")
+def handle_calib_test_dir(data):
+    """اختبار اتجاه عجلة منطقية"""
+    bt_manager.send_json({"cal": "dir", "wheel": data.get("wheel", "FL"),
+                          "spd": data.get("spd", 150), "ms": data.get("ms", 700)})
+
+
+@socketio.on("calib_set_invert")
+def handle_calib_set_invert(data):
+    """عكس اتجاه عجلة"""
+    bt_manager.send_json({"cfg": "inv", "wheel": data.get("wheel"),
+                          "invert": data.get("invert", 0)})
+
+
+@socketio.on("calib_move_servo")
+def handle_calib_move_servo(data):
+    """تحريك سيرفو لزاوية محددة للمعايرة"""
+    bt_manager.send_json({"cal": "servo", "id": data.get("id", 1),
+                          "angle": data.get("angle", 90)})
+
+
+@socketio.on("calib_set_servo")
+def handle_calib_set_servo(data):
+    """ضبط حدود واتجاه سيرفو"""
+    bt_manager.send_json({"cfg": "servo", "id": data.get("id", 1),
+                          "min": data.get("min", 0), "max": data.get("max", 180),
+                          "center": data.get("center", 90),
+                          "invert": data.get("invert", 0)})
+
+
+@socketio.on("calib_save")
+def handle_calib_save():
+    """حفظ الإعدادات في EEPROM"""
+    bt_manager.send_json({"cfg": "save"})
+
+
+@socketio.on("calib_get")
+def handle_calib_get():
+    """قراءة الإعدادات الحالية من EEPROM"""
+    bt_manager.send_json({"cfg": "get"})
+
+
+@socketio.on("calib_reset")
+def handle_calib_reset():
+    """إعادة ضبط المصنع"""
+    bt_manager.send_json({"cfg": "reset"})
 
 
 # ══════════════════════ أدوات مساعدة ══════════════════════

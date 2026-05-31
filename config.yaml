@@ -37,8 +37,8 @@ camera:
   roi_enabled: false
   roi_rect: [0, 0, 640, 480]
   threshold_value: 128
-  recording_path: "/home/user/program/recordings"
-  photo_path: "/home/user/program/photos"
+  recording_path: "recordings"
+  photo_path: "photos"
 
 motors:
   default_speed: 200
@@ -51,7 +51,7 @@ motors:
     left_angle: 0
     right_angle: 180
   dc:
-    count: 2
+    count: 4
   safety:
     ramp_enabled: true
     heartbeat_enabled: true
@@ -98,8 +98,17 @@ sensors:
       warn_high: null
       warn_low: 10
       color: "#9b59b6"
+    - code: "R"
+      name: "Rain"
+      unit: "%"
+      icon: "🌧️"
+      min: 0
+      max: 100
+      warn_high: null
+      warn_low: null
+      color: "#2980b9"
 
 logging:
   level: "INFO"
-  file: "/home/user/program/logs/app.log"
+  file: "logs/app.log"
   max_size_mb: 10

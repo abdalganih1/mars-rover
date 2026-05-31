@@ -60,6 +60,61 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',Tahoma,sa
 .checkbox-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
 .checkbox-row input[type=checkbox] { width:18px; height:18px; accent-color:var(--accent); }
 .save-bar { position:sticky; bottom:0; background:var(--bg); padding:12px 0; border-top:1px solid var(--border); }
+
+/* ===== CALIBRATION STYLES ===== */
+.wizard-steps { display:flex; gap:0; margin-bottom:20px; }
+.wstep { flex:1; text-align:center; padding:10px 6px; font-size:.8rem; color:var(--text2); border-bottom:3px solid var(--border); position:relative; transition:.3s; }
+.wstep.active { color:var(--accent); border-color:var(--accent); font-weight:600; }
+.wstep.done { color:var(--success); border-color:var(--success); }
+.wstep-num { display:block; font-size:1.3rem; margin-bottom:4px; }
+
+.rover-diagram { display:grid; grid-template-columns:1fr auto 1fr; grid-template-rows:1fr auto 1fr; gap:8px; width:220px; margin:16px auto; }
+.wheel-box { background:var(--card2); border:2px solid var(--border); border-radius:8px; padding:8px 12px; text-align:center; font-size:.75rem; cursor:pointer; transition:.3s; user-select:none; }
+.wheel-box:hover { border-color:var(--accent); }
+.wheel-box.selected { border-color:var(--success); background:rgba(6,214,160,.15); color:var(--success); }
+.wheel-box.active-test { border-color:var(--warning); background:rgba(255,209,102,.15); animation:pulse 1s infinite; }
+.wheel-box.mapped { border-color:var(--accent); background:rgba(0,180,216,.1); }
+.rover-body { background:var(--card2); border:2px solid var(--border); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; }
+.rover-front-label { color:var(--text2); font-size:.7rem; text-align:center; }
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+.question-box { background:var(--card2); border:1px solid var(--accent); border-radius:12px; padding:16px; margin:16px 0; text-align:center; }
+.question-box p { font-size:1rem; margin-bottom:12px; color:var(--text); }
+.answer-btns { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+
+.calib-progress { background:var(--card2); border-radius:8px; padding:2px; margin:12px 0; }
+.calib-progress-bar { background:linear-gradient(90deg,var(--accent2),var(--accent)); border-radius:6px; height:8px; transition:width .5s; }
+
+.config-table { width:100%; border-collapse:collapse; font-size:.85rem; }
+.config-table th { color:var(--text2); padding:6px 10px; text-align:right; border-bottom:1px solid var(--border); }
+.config-table td { padding:8px 10px; border-bottom:1px solid var(--border); }
+.config-table tr:last-child td { border-bottom:none; }
+.config-val { font-weight:bold; color:var(--accent); }
+.config-inv { color:var(--warning); }
+
+.servo-live-box { background:var(--card2); border-radius:12px; padding:16px; margin:16px 0; }
+.servo-angle-display { font-size:3rem; font-weight:700; color:var(--accent); text-align:center; line-height:1; }
+.servo-angle-label { text-align:center; color:var(--text2); font-size:.85rem; margin-top:4px; }
+.servo-visual { width:80px; height:80px; margin:12px auto; position:relative; }
+.servo-visual svg { width:100%; height:100%; }
+
+.phase-panel { display:none; }
+.phase-panel.active { display:block; }
+
+.info-badge { background:rgba(0,180,216,.15); border:1px solid var(--accent); color:var(--accent); border-radius:20px; padding:4px 12px; font-size:.8rem; display:inline-block; margin:4px; }
+.warn-badge { background:rgba(255,209,102,.15); border:1px solid var(--warning); color:var(--warning); border-radius:20px; padding:4px 12px; font-size:.8rem; display:inline-block; margin:4px; }
+.success-badge { background:rgba(6,214,160,.15); border:1px solid var(--success); color:var(--success); border-radius:20px; padding:4px 12px; font-size:.8rem; display:inline-block; margin:4px; }
+
+.wheel-grid-4 { display:grid; grid-template-columns:1fr 1fr; gap:10px; max-width:320px; margin:12px auto; }
+.wheel-btn { padding:14px; border-radius:10px; border:2px solid var(--border); background:var(--card2); color:var(--text); font-size:.9rem; cursor:pointer; transition:.3s; text-align:center; }
+.wheel-btn:hover { border-color:var(--accent); background:rgba(0,180,216,.1); }
+.wheel-btn.chosen { border-color:var(--success); background:rgba(6,214,160,.15); color:var(--success); }
+
+.eeprom-status { padding:8px 14px; border-radius:8px; font-size:.85rem; margin:8px 0; }
+.eeprom-status.synced { background:rgba(6,214,160,.15); border:1px solid var(--success); color:var(--success); }
+.eeprom-status.unsynced { background:rgba(255,209,102,.15); border:1px solid var(--warning); color:var(--warning); }
+.eeprom-status.loading { background:rgba(0,180,216,.1); border:1px solid var(--accent); color:var(--accent); }
 </style>
 </head>
 <body>
@@ -74,6 +129,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',Tahoma,sa
     <button class="tab-btn" data-tab="motors">⚡ المحركات</button>
     <button class="tab-btn" data-tab="sensors">🌡️ الحساسات</button>
     <button class="tab-btn" data-tab="scenarios">🎬 السيناريوهات</button>
+    <button class="tab-btn" data-tab="calibration">🎛️ معايرة الأردوينو</button>
     <button class="tab-btn" data-tab="general">🔧 عام</button>
   </div>
 
@@ -88,11 +144,11 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',Tahoma,sa
       <div class="form-group">
         <label>معدل البود (Baud Rate)</label>
         <select id="bt-baud">
-          <option value="9600">9600</option>
+          <option value="9600" selected>9600</option>
           <option value="19200">19200</option>
           <option value="38400">38400</option>
           <option value="57600">57600</option>
-          <option value="115200" selected>115200</option>
+          <option value="115200">115200</option>
         </select>
       </div>
       <div class="form-group">
@@ -179,50 +235,17 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',Tahoma,sa
           <option value="lab">LAB</option>
         </select>
       </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="cam-rotate">
-        <label for="cam-rotate">تدوير 180°</label>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="cam-flip-h">
-        <label for="cam-flip-h">انعكاس أفقي</label>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="cam-flip-v">
-        <label for="cam-flip-v">انعكاس عمودي</label>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="cam-edge">
-        <label for="cam-edge">كشف الحواف (Canny)</label>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="cam-threshold">
-        <label for="cam-threshold">عتبة ثنائية (Threshold)</label>
-      </div>
+      <div class="checkbox-row"><input type="checkbox" id="cam-rotate"><label for="cam-rotate">تدوير 180°</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="cam-flip-h"><label for="cam-flip-h">انعكاس أفقي</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="cam-flip-v"><label for="cam-flip-v">انعكاس عمودي</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="cam-edge"><label for="cam-edge">كشف الحواف (Canny)</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="cam-threshold"><label for="cam-threshold">عتبة ثنائية (Threshold)</label></div>
     </div>
     <div class="card">
       <h3>☀️ ضبط السطوع والتباين</h3>
-      <div class="form-group">
-        <label>السطوع</label>
-        <div class="range-row">
-          <input type="range" id="cam-brightness" min="-100" max="100" value="0">
-          <span class="range-val" id="cam-brightness-val">0</span>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>التباين</label>
-        <div class="range-row">
-          <input type="range" id="cam-contrast" min="-100" max="100" value="0">
-          <span class="range-val" id="cam-contrast-val">0</span>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>التشبع</label>
-        <div class="range-row">
-          <input type="range" id="cam-saturation" min="0" max="200" value="100">
-          <span class="range-val" id="cam-saturation-val">100</span>
-        </div>
-      </div>
+      <div class="form-group"><label>السطوع</label><div class="range-row"><input type="range" id="cam-brightness" min="-100" max="100" value="0"><span class="range-val" id="cam-brightness-val">0</span></div></div>
+      <div class="form-group"><label>التباين</label><div class="range-row"><input type="range" id="cam-contrast" min="-100" max="100" value="0"><span class="range-val" id="cam-contrast-val">0</span></div></div>
+      <div class="form-group"><label>التشبع</label><div class="range-row"><input type="range" id="cam-saturation" min="0" max="200" value="100"><span class="range-val" id="cam-saturation-val">100</span></div></div>
     </div>
   </div>
 
@@ -230,65 +253,23 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',Tahoma,sa
   <div class="tab-content" id="tab-motors">
     <div class="card">
       <h3>⚡ محركات DC</h3>
-      <div class="form-group">
-        <label>السرعة الافتراضية (0-255)</label>
-        <div class="range-row">
-          <input type="range" id="mot-default-speed" min="0" max="255" value="150">
-          <span class="range-val" id="mot-default-speed-val">150</span>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>الحد الأدنى للسرعة</label>
-        <input type="number" id="mot-min-speed" value="50" min="0" max="255">
-      </div>
-      <div class="form-group">
-        <label>مدة التسارع (مللي ثانية)</label>
-        <input type="number" id="mot-ramp-duration" value="500" min="0" max="5000">
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="mot-invert-m1">
-        <label for="mot-invert-m1">عكس اتجاه المحرك M1</label>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="mot-invert-m2">
-        <label for="mot-invert-m2">عكس اتجاه المحرك M2</label>
-      </div>
+      <div class="form-group"><label>السرعة الافتراضية (0-255)</label><div class="range-row"><input type="range" id="mot-default-speed" min="0" max="255" value="150"><span class="range-val" id="mot-default-speed-val">150</span></div></div>
+      <div class="form-group"><label>الحد الأدنى للسرعة</label><input type="number" id="mot-min-speed" value="50" min="0" max="255"></div>
+      <div class="form-group"><label>مدة التسارع (مللي ثانية)</label><input type="number" id="mot-ramp-duration" value="500" min="0" max="5000"></div>
+      <div class="checkbox-row"><input type="checkbox" id="mot-invert-m1"><label for="mot-invert-m1">عكس اتجاه M1</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="mot-invert-m2"><label for="mot-invert-m2">عكس اتجاه M2</label></div>
     </div>
     <div class="card">
       <h3>🔄 محركات السيرفو</h3>
-      <div class="form-group">
-        <label>زاوية الوسط (Center) لـ S1</label>
-        <div class="range-row">
-          <input type="range" id="servo1-center" min="0" max="180" value="90">
-          <span class="range-val" id="servo1-center-val">90°</span>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>زاوية الوسط (Center) لـ S2</label>
-        <div class="range-row">
-          <input type="range" id="servo2-center" min="0" max="180" value="90">
-          <span class="range-val" id="servo2-center-val">90°</span>
-        </div>
+      <div class="form-group"><label>زاوية الوسط S1</label><div class="range-row"><input type="range" id="servo1-center" min="0" max="180" value="90"><span class="range-val" id="servo1-center-val">90°</span></div></div>
+      <div class="form-group"><label>زاوية الوسط S2</label><div class="range-row"><input type="range" id="servo2-center" min="0" max="180" value="90"><span class="range-val" id="servo2-center-val">90°</span></div></div>
+      <div class="row">
+        <div class="form-group"><label>أقل زاوية S1</label><input type="number" id="servo1-min" value="0" min="0" max="180"></div>
+        <div class="form-group"><label>أعلى زاوية S1</label><input type="number" id="servo1-max" value="180" min="0" max="180"></div>
       </div>
       <div class="row">
-        <div class="form-group">
-          <label>أقل زاوية S1</label>
-          <input type="number" id="servo1-min" value="0" min="0" max="180">
-        </div>
-        <div class="form-group">
-          <label>أعلى زاوية S1</label>
-          <input type="number" id="servo1-max" value="180" min="0" max="180">
-        </div>
-      </div>
-      <div class="row">
-        <div class="form-group">
-          <label>أقل زاوية S2</label>
-          <input type="number" id="servo2-min" value="0" min="0" max="180">
-        </div>
-        <div class="form-group">
-          <label>أعلى زاوية S2</label>
-          <input type="number" id="servo2-max" value="180" min="0" max="180">
-        </div>
+        <div class="form-group"><label>أقل زاوية S2</label><input type="number" id="servo2-min" value="0" min="0" max="180"></div>
+        <div class="form-group"><label>أعلى زاوية S2</label><input type="number" id="servo2-max" value="180" min="0" max="180"></div>
       </div>
       <div style="margin-top:12px">
         <button class="btn btn-primary btn-sm" onclick="testServo('s1')">🔄 اختبار S1</button>
@@ -303,56 +284,27 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',Tahoma,sa
     <div class="card">
       <h3>🌡️ إدارة الحساسات</h3>
       <div id="sensor-list" class="sensor-grid"></div>
-      <div style="margin-top:16px">
-        <button class="btn btn-success" onclick="showAddSensor()">➕ إضافة حساس جديد</button>
-      </div>
+      <div style="margin-top:16px"><button class="btn btn-success" onclick="showAddSensor()">➕ إضافة حساس جديد</button></div>
     </div>
     <div class="card" id="add-sensor-form" style="display:none">
       <h3>➕ إضافة حساس جديد</h3>
       <div class="row">
-        <div class="form-group">
-          <label>رمز الحرف (مثلاً: T)</label>
-          <input type="text" id="new-sensor-code" maxlength="1" placeholder="T" style="text-transform:uppercase">
-        </div>
-        <div class="form-group">
-          <label>اسم الحساس</label>
-          <input type="text" id="new-sensor-name" placeholder="الحرارة">
-        </div>
+        <div class="form-group"><label>رمز الحرف (مثلاً: T)</label><input type="text" id="new-sensor-code" maxlength="1" placeholder="T" style="text-transform:uppercase"></div>
+        <div class="form-group"><label>اسم الحساس</label><input type="text" id="new-sensor-name" placeholder="الحرارة"></div>
       </div>
       <div class="row">
-        <div class="form-group">
-          <label>الوحدة</label>
-          <input type="text" id="new-sensor-unit" placeholder="°C">
-        </div>
-        <div class="form-group">
-          <label>الأيقونة (emoji)</label>
-          <input type="text" id="new-sensor-icon" placeholder="🌡️">
-        </div>
+        <div class="form-group"><label>الوحدة</label><input type="text" id="new-sensor-unit" placeholder="°C"></div>
+        <div class="form-group"><label>الأيقونة (emoji)</label><input type="text" id="new-sensor-icon" placeholder="🌡️"></div>
       </div>
       <div class="row">
-        <div class="form-group">
-          <label>أقل قيمة</label>
-          <input type="number" id="new-sensor-min" value="0">
-        </div>
-        <div class="form-group">
-          <label>أعلى قيمة</label>
-          <input type="number" id="new-sensor-max" value="100">
-        </div>
+        <div class="form-group"><label>أقل قيمة</label><input type="number" id="new-sensor-min" value="0"></div>
+        <div class="form-group"><label>أعلى قيمة</label><input type="number" id="new-sensor-max" value="100"></div>
       </div>
       <div class="row">
-        <div class="form-group">
-          <label>تحذير مرتفع</label>
-          <input type="number" id="new-sensor-warn-high" value="80">
-        </div>
-        <div class="form-group">
-          <label>تحذير منخفض</label>
-          <input type="number" id="new-sensor-warn-low" value="10">
-        </div>
+        <div class="form-group"><label>تحذير مرتفع</label><input type="number" id="new-sensor-warn-high" value="80"></div>
+        <div class="form-group"><label>تحذير منخفض</label><input type="number" id="new-sensor-warn-low" value="10"></div>
       </div>
-      <div class="form-group">
-        <label>اللون</label>
-        <input type="color" id="new-sensor-color" value="#00b4d8">
-      </div>
+      <div class="form-group"><label>اللون</label><input type="color" id="new-sensor-color" value="#00b4d8"></div>
       <button class="btn btn-success" onclick="addSensor()">💾 حفظ</button>
       <button class="btn btn-danger btn-sm" onclick="hideAddSensor()">❌ إلغاء</button>
     </div>
@@ -363,61 +315,264 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',Tahoma,sa
     <div class="card">
       <h3>🎬 السيناريوهات المحفوظة</h3>
       <div id="scenario-list"></div>
-      <div style="margin-top:12px">
-        <button class="btn btn-primary" onclick="refreshScenarios()">🔄 تحديث</button>
-      </div>
+      <div style="margin-top:12px"><button class="btn btn-primary" onclick="refreshScenarios()">🔄 تحديث</button></div>
     </div>
     <div class="card">
       <h3>➕ إنشاء سيناريو جديد</h3>
-      <div class="form-group">
-        <label>اسم السيناريو</label>
-        <input type="text" id="scenario-name" placeholder="اسم السيناريو">
-      </div>
-      <div class="form-group">
-        <label>الوصف</label>
-        <input type="text" id="scenario-desc" placeholder="وصف مختصر">
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="scenario-loop">
-        <label for="scenario-loop">تكرار مستمر (Loop)</label>
-      </div>
+      <div class="form-group"><label>اسم السيناريو</label><input type="text" id="scenario-name" placeholder="اسم السيناريو"></div>
+      <div class="form-group"><label>الوصف</label><input type="text" id="scenario-desc" placeholder="وصف مختصر"></div>
+      <div class="checkbox-row"><input type="checkbox" id="scenario-loop"><label for="scenario-loop">تكرار مستمر (Loop)</label></div>
       <div class="form-group">
         <label>الخطوات (JSON)</label>
-        <textarea id="scenario-steps" rows="6" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-family:monospace;font-size:.85rem" placeholder='[
-  {"m1": 150, "m2": 150, "s1": 90, "s2": 90, "duration": 1000},
-  {"m1": 0, "m2": 0, "s1": 45, "s2": 135, "duration": 500},
-  {"m1": -100, "m2": -100, "s1": 90, "s2": 90, "duration": 800}
-]'></textarea>
+        <textarea id="scenario-steps" rows="6" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-family:monospace;font-size:.85rem" placeholder='[{"m1":150,"m2":150,"s1":90,"s2":90,"duration":1000}]'></textarea>
       </div>
       <button class="btn btn-success" onclick="saveScenario()">💾 حفظ السيناريو</button>
     </div>
   </div>
 
+  <!-- ═══════════════ معايرة الأردوينو ═══════════════ -->
+  <div class="tab-content" id="tab-calibration">
+
+    <!-- الإعدادات الحالية -->
+    <div class="card">
+      <h3>📋 الإعدادات الحالية في EEPROM</h3>
+      <div id="eeprom-status" class="eeprom-status loading">⏳ لم يتم التحميل بعد — اضغط "تحميل" أو تأكد من الاتصال بالأردوينو</div>
+      <button class="btn btn-primary btn-sm" onclick="calibGet()" style="margin-bottom:12px">🔄 تحميل من الأردوينو</button>
+
+      <div id="cfg-display" style="display:none">
+        <p style="color:var(--text2);font-size:.8rem;margin-bottom:8px">ربط العجلات بمنافذ الشيلد (M1..M4) واتجاه كل عجلة:</p>
+        <table class="config-table">
+          <thead><tr><th>العجلة</th><th>المنفذ</th><th>الاتجاه</th></tr></thead>
+          <tbody>
+            <tr><td>🔼 أمامي يسار (FL)</td><td><span class="config-val" id="cfg-port-FL">—</span></td><td id="cfg-inv-FL">—</td></tr>
+            <tr><td>🔼 أمامي يمين (FR)</td><td><span class="config-val" id="cfg-port-FR">—</span></td><td id="cfg-inv-FR">—</td></tr>
+            <tr><td>🔽 خلفي يسار (RL)</td><td><span class="config-val" id="cfg-port-RL">—</span></td><td id="cfg-inv-RL">—</td></tr>
+            <tr><td>🔽 خلفي يمين (RR)</td><td><span class="config-val" id="cfg-port-RR">—</span></td><td id="cfg-inv-RR">—</td></tr>
+          </tbody>
+        </table>
+        <p style="color:var(--text2);font-size:.8rem;margin:12px 0 8px">السيرفو:</p>
+        <table class="config-table">
+          <thead><tr><th>السيرفو</th><th>الحد الأدنى</th><th>الحد الأعلى</th><th>المركز</th><th>معكوس</th></tr></thead>
+          <tbody>
+            <tr><td>S1 (D9)</td><td><span class="config-val" id="cfg-s1-min">—</span>°</td><td><span class="config-val" id="cfg-s1-max">—</span>°</td><td><span class="config-val" id="cfg-s1-center">—</span>°</td><td id="cfg-s1-inv">—</td></tr>
+            <tr><td>S2 (D10)</td><td><span class="config-val" id="cfg-s2-min">—</span>°</td><td><span class="config-val" id="cfg-s2-max">—</span>°</td><td><span class="config-val" id="cfg-s2-center">—</span>°</td><td id="cfg-s2-inv">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ معالج معايرة المحركات ═══ -->
+    <div class="card">
+      <h3>🚗 معالج معايرة المحركات (4 عجلات)</h3>
+      <p style="color:var(--text2);font-size:.85rem;margin-bottom:16px">
+        المعالج يشغّل كل منفذ على حدة ويسألك أي عجلة تحرّكت، ثم يتحقق من اتجاه دورانها.
+        <strong style="color:var(--warning)"> ارفع العجلات عن الأرض أولاً!</strong>
+      </p>
+
+      <!-- مؤشر الخطوات -->
+      <div class="wizard-steps">
+        <div class="wstep active" id="mw-step-1"><span class="wstep-num">①</span>تحديد العجلات</div>
+        <div class="wstep" id="mw-step-2"><span class="wstep-num">②</span>ضبط الاتجاه</div>
+        <div class="wstep" id="mw-step-3"><span class="wstep-num">✓</span>مكتمل</div>
+      </div>
+
+      <!-- شريط التقدم -->
+      <div class="calib-progress"><div class="calib-progress-bar" id="mw-progress" style="width:0%"></div></div>
+      <div id="mw-progress-label" style="color:var(--text2);font-size:.8rem;text-align:center;margin-bottom:12px"> </div>
+
+      <!-- المرحلة 1: تحديد أي منفذ = أي عجلة -->
+      <div class="phase-panel active" id="mw-phase-1">
+        <div id="mw-port-instruction" class="question-box">
+          <p>اضغط <strong style="color:var(--warning)">تشغيل</strong> لتحريك المنفذ الحالي، ثم اختر أي عجلة تحرّكت</p>
+        </div>
+        <div style="text-align:center;margin:8px 0">
+          <button class="btn btn-warning" id="mw-run-port-btn" onclick="mwRunPort()">▶️ تشغيل المنفذ <span id="mw-cur-port">1</span></button>
+        </div>
+
+        <!-- مخطط الروبوت التفاعلي -->
+        <div style="position:relative">
+          <p style="text-align:center;color:var(--text2);font-size:.75rem;margin:8px 0">اضغط على العجلة التي تحرّكت:</p>
+          <div class="rover-diagram">
+            <div class="wheel-box" id="wb-FL" onclick="mwSelectWheel('FL')">أمامي<br>يسار<br><small>FL</small></div>
+            <div class="rover-front-label" style="align-self:end;padding-bottom:4px">⬆️ أمام</div>
+            <div class="wheel-box" id="wb-FR" onclick="mwSelectWheel('FR')">أمامي<br>يمين<br><small>FR</small></div>
+            <div></div>
+            <div class="rover-body" style="font-size:2rem">🤖</div>
+            <div></div>
+            <div class="wheel-box" id="wb-RL" onclick="mwSelectWheel('RL')">خلفي<br>يسار<br><small>RL</small></div>
+            <div style="text-align:center;align-self:start;padding-top:4px;color:var(--text2);font-size:.7rem">⬇️ خلف</div>
+            <div class="wheel-box" id="wb-RR" onclick="mwSelectWheel('RR')">خلفي<br>يمين<br><small>RR</small></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- المرحلة 2: ضبط الاتجاه -->
+      <div class="phase-panel" id="mw-phase-2">
+        <div class="question-box">
+          <p>اضغط <strong style="color:var(--warning)">اختبار الاتجاه</strong>، ثم أجب: هل تحرّكت العجلة <strong style="color:var(--accent)" id="mw-dir-wheel">FL</strong> بالاتجاه الذي يدفع الروبوت <strong>للأمام</strong>؟</p>
+        </div>
+        <div style="text-align:center;margin:12px 0">
+          <button class="btn btn-warning" onclick="mwTestDir()">▶️ اختبار اتجاه <span id="mw-dir-wheel-2">FL</span></button>
+        </div>
+        <div class="answer-btns" style="margin-top:12px">
+          <button class="btn btn-success" onclick="mwSetInvert(0)">✅ نعم، تحرّكت للأمام بشكل صحيح</button>
+          <button class="btn btn-danger" onclick="mwSetInvert(1)">🔄 لا، كانت للخلف — اعكسها</button>
+        </div>
+      </div>
+
+      <!-- المرحلة 3: مكتمل -->
+      <div class="phase-panel" id="mw-phase-3">
+        <div style="text-align:center;padding:20px">
+          <div style="font-size:3rem">✅</div>
+          <p style="font-size:1.1rem;color:var(--success);margin:8px 0">تم تحديد كل العجلات وضبط اتجاهاتها!</p>
+          <p style="color:var(--text2);font-size:.85rem">اضغط "حفظ في EEPROM" أدناه لتثبيت الإعدادات</p>
+        </div>
+      </div>
+
+      <!-- أزرار التحكم بالمعالج -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn btn-primary" id="mw-start-btn" onclick="mwStart()">🚀 بدء المعايرة</button>
+        <button class="btn btn-warning btn-sm" onclick="mwReset()" id="mw-reset-btn" style="display:none">🔄 إعادة البدء</button>
+      </div>
+
+      <!-- ملخص الربط الحالي -->
+      <div id="mw-summary" style="display:none;margin-top:16px;background:var(--card2);border-radius:8px;padding:12px">
+        <p style="color:var(--text2);font-size:.8rem;margin-bottom:8px">الربط المُحدَّد:</p>
+        <div id="mw-summary-content" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.85rem"></div>
+      </div>
+    </div>
+
+    <!-- ═══ معالج معايرة السيرفو ═══ -->
+    <div class="card">
+      <h3>🔄 معالج معايرة السيرفو</h3>
+      <p style="color:var(--text2);font-size:.85rem;margin-bottom:16px">
+        حرّك كل سيرفو لتحديد دوره واتجاهه وحدوده الميكانيكية.
+      </p>
+
+      <!-- مؤشر الخطوات -->
+      <div class="wizard-steps">
+        <div class="wstep active" id="sw-step-1"><span class="wstep-num">①</span>اختيار السيرفو</div>
+        <div class="wstep" id="sw-step-2"><span class="wstep-num">②</span>ضبط الاتجاه</div>
+        <div class="wstep" id="sw-step-3"><span class="wstep-num">③</span>الحدود والمركز</div>
+        <div class="wstep" id="sw-step-4"><span class="wstep-num">✓</span>مكتمل</div>
+      </div>
+
+      <!-- المرحلة 1: اختيار السيرفو -->
+      <div class="phase-panel active" id="sw-phase-1">
+        <div class="question-box">
+          <p>اختر السيرفو الذي تريد معايرته:</p>
+          <div class="answer-btns">
+            <button class="btn btn-primary" onclick="swStart(1)">🔄 السيرفو 1 (S1 — D9)</button>
+            <button class="btn btn-primary" onclick="swStart(2)">🔄 السيرفو 2 (S2 — D10)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- المرحلة 2: ضبط الاتجاه -->
+      <div class="phase-panel" id="sw-phase-2">
+        <div class="question-box">
+          <p>سيتحرك <strong style="color:var(--accent)" id="sw-id-label">S1</strong> إلى <strong>0°</strong> ثم <strong>180°</strong>.<br>
+          اضغط "تشغيل" ثم أخبرنا: ما الاتجاه الذي يتحرك إليه عند زاوية 0°؟</p>
+        </div>
+        <div style="text-align:center;margin:12px 0">
+          <button class="btn btn-warning" onclick="swTestRange()">▶️ تحريك 0° ← ← ← 180°</button>
+        </div>
+        <div class="answer-btns" style="margin-top:8px">
+          <button class="btn btn-primary btn-sm" onclick="swSetInvert(0)">↔️ الاتجاه صحيح (0°=يمين أو أسفل)</button>
+          <button class="btn btn-warning btn-sm" onclick="swSetInvert(1)">🔄 الاتجاه معكوس — اعكسه</button>
+        </div>
+      </div>
+
+      <!-- المرحلة 3: الحدود والمركز (live) -->
+      <div class="phase-panel" id="sw-phase-3">
+        <p style="color:var(--text2);font-size:.85rem;margin-bottom:12px">
+          حرّك المنزلق لاختبار الزوايا مباشرة. عيّن الحدود الميكانيكية الآمنة ومركز الراحة.
+        </p>
+
+        <div class="servo-live-box">
+          <div class="servo-angle-display" id="sw-live-angle">90</div>
+          <div class="servo-angle-label">الزاوية الحالية (°)</div>
+          <div style="margin-top:12px">
+            <div class="range-row">
+              <input type="range" id="sw-live-slider" min="0" max="180" value="90" oninput="swLiveMove(this.value)">
+              <span class="range-val" id="sw-live-val">90°</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <div class="form-group">
+            <label>الحد الأدنى (أقل زاوية مسموحة)</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="number" id="sw-min" min="0" max="180" value="0" style="width:80px">
+              <button class="btn btn-sm btn-warning" onclick="swSetLimitFromSlider('min')">← تعيين من المنزلق</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>الحد الأعلى (أعلى زاوية مسموحة)</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="number" id="sw-max" min="0" max="180" value="180" style="width:80px">
+              <button class="btn btn-sm btn-warning" onclick="swSetLimitFromSlider('max')">← تعيين من المنزلق</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>زاوية المركز / الراحة</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="number" id="sw-center" min="0" max="180" value="90" style="width:80px">
+            <button class="btn btn-sm btn-warning" onclick="swSetLimitFromSlider('center')">← تعيين من المنزلق</button>
+            <button class="btn btn-sm btn-primary" onclick="swGoCenter()">⏺️ ذهاب للمركز</button>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn btn-success" onclick="swConfirmLimits()">✅ تأكيد الحدود</button>
+        </div>
+      </div>
+
+      <!-- المرحلة 4: مكتمل -->
+      <div class="phase-panel" id="sw-phase-4">
+        <div style="text-align:center;padding:20px">
+          <div style="font-size:3rem">✅</div>
+          <p style="font-size:1.1rem;color:var(--success);margin:8px 0">تم ضبط السيرفو!</p>
+          <div id="sw-summary" style="color:var(--text2);font-size:.85rem;margin:8px 0"></div>
+          <div class="answer-btns" style="margin-top:12px">
+            <button class="btn btn-primary" onclick="swStart(swState.currentId===1?2:1)">🔄 معايرة السيرفو الآخر</button>
+            <button class="btn btn-warning" onclick="swReset()">↩️ إعادة معايرة هذا السيرفو</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ حفظ وإعادة الضبط ═══ -->
+    <div class="card">
+      <h3>💾 حفظ وإعادة الضبط</h3>
+      <p style="color:var(--text2);font-size:.85rem;margin-bottom:14px">
+        الإعدادات المؤقتة (من المعالجَين أعلاه) <span class="warn-badge">لم تُحفظ بعد</span> حتى تضغط الزر أدناه.
+        بعد الحفظ تبقى في EEPROM حتى بعد إطفاء الأردوينو.
+      </p>
+      <div id="pending-changes" style="display:none;margin-bottom:12px">
+        <p style="color:var(--text2);font-size:.8rem;margin-bottom:6px">تغييرات معلّقة:</p>
+        <div id="pending-list" style="font-size:.85rem"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-success" onclick="calibSave()">💾 حفظ في EEPROM</button>
+        <button class="btn btn-danger" onclick="calibResetFactory()">🏭 إعادة الضبط للمصنع</button>
+      </div>
+      <div id="save-result" style="margin-top:12px"></div>
+    </div>
+
+  </div><!-- end calibration tab -->
+
   <!-- عام -->
   <div class="tab-content" id="tab-general">
     <div class="card">
       <h3>🔧 إعدادات عامة</h3>
-      <div class="form-group">
-        <label>منفذ الخادم</label>
-        <input type="number" id="gen-port" value="5000" min="1024" max="65535">
+      <div class="form-group"><label>منفذ الخادم</label><input type="number" id="gen-port" value="5000" min="1024" max="65535"></div>
+      <div class="form-group"><label>مستوى السجل (Log Level)</label>
+        <select id="gen-log-level"><option value="DEBUG">DEBUG</option><option value="INFO" selected>INFO</option><option value="WARNING">WARNING</option><option value="ERROR">ERROR</option></select>
       </div>
-      <div class="form-group">
-        <label>مستوى السجل (Log Level)</label>
-        <select id="gen-log-level">
-          <option value="DEBUG">DEBUG</option>
-          <option value="INFO" selected>INFO</option>
-          <option value="WARNING">WARNING</option>
-          <option value="ERROR">ERROR</option>
-        </select>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="gen-auto-start-camera">
-        <label for="gen-auto-start-camera">تشغيل الكاميرا تلقائياً</label>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="gen-auto-connect-bt">
-        <label for="gen-auto-connect-bt">اتصال تلقائي بالبلوتوث</label>
-      </div>
+      <div class="checkbox-row"><input type="checkbox" id="gen-auto-start-camera"><label for="gen-auto-start-camera">تشغيل الكاميرا تلقائياً</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="gen-auto-connect-bt"><label for="gen-auto-connect-bt">اتصال تلقائي بالبلوتوث</label></div>
     </div>
     <div class="card">
       <h3>💾 تصدير واستيراد</h3>
@@ -439,7 +594,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',Tahoma,sa
 <script>
 const socket = io();
 
-// Tabs
+// ─── Tabs ───
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -449,266 +604,430 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// Range sliders
+// ─── Range sliders ───
 document.querySelectorAll('input[type=range]').forEach(r => {
   const valEl = document.getElementById(r.id + '-val');
-  if (valEl) {
-    r.addEventListener('input', () => {
-      let v = r.value;
-      if (r.id.includes('servo') && r.id.includes('center')) v += '°';
-      valEl.textContent = v;
-    });
-  }
+  if (valEl) r.addEventListener('input', () => {
+    let v = r.value;
+    if (r.id.includes('servo') && r.id.includes('center')) v += '°';
+    valEl.textContent = v;
+  });
 });
 
-// Toast
+// ─── Toast ───
 function showToast(msg, type='success') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast ' + type + ' show';
-  setTimeout(() => t.className = 'toast', 3000);
+  setTimeout(() => t.className = 'toast', 3200);
 }
 
-// Bluetooth
+// ─── Bluetooth ───
 function scanBluetooth() {
   socket.emit('bluetooth_scan');
   document.getElementById('bt-devices').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2)">🔍 جاري البحث...</div>';
 }
 function connectBluetooth() {
-  const port = document.getElementById('bt-port').value;
-  const baud = parseInt(document.getElementById('bt-baud').value);
-  socket.emit('bluetooth_connect', { port, baud });
+  socket.emit('bluetooth_connect', { port: document.getElementById('bt-port').value, baud: parseInt(document.getElementById('bt-baud').value) });
   showToast('جاري الاتصال...', 'success');
 }
-function disconnectBluetooth() {
-  socket.emit('bluetooth_disconnect');
-  showToast('تم قطع الاتصال', 'error');
-}
+function disconnectBluetooth() { socket.emit('bluetooth_disconnect'); showToast('تم قطع الاتصال', 'error'); }
 
 socket.on('bluetooth_devices', (devices) => {
   const el = document.getElementById('bt-devices');
   if (!devices.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2)">لم يتم العثور على أجهزة</div>'; return; }
-  el.innerHTML = devices.map(d => `<div class="device-item"><div><div class="device-info">${d.name || 'مجهول'}</div><div class="device-addr">${d.address}</div></div><button class="btn btn-primary btn-sm" onclick="socket.emit('bluetooth_connect',{mac:'${d.address}'})">🔗 اتصال</button></div>`).join('');
+  el.innerHTML = devices.map(d => `<div class="device-item"><div><div class="device-info">${d.name||'مجهول'}</div><div class="device-addr">${d.address}</div></div><button class="btn btn-primary btn-sm" onclick="socket.emit('bluetooth_connect',{mac:'${d.address}'})">🔗</button></div>`).join('');
 });
-
 socket.on('bluetooth_status', (data) => {
   const el = document.getElementById('bt-status');
   const cls = data.connected ? 'connected' : 'disconnected';
-  const text = data.connected ? 'متصل ✅' : 'غير متصل ❌';
-  el.innerHTML = `<span class="status-dot ${cls}"></span> ${text}`;
+  el.innerHTML = `<span class="status-dot ${cls}"></span> ${data.connected ? 'متصل ✅' : 'غير متصل ❌'}`;
   if (data.connected) showToast('تم الاتصال بنجاح! 🎉');
 });
 
-// Sensors
-function showAddSensor() { document.getElementById('add-sensor-form').style.display = 'block'; }
-function hideAddSensor() { document.getElementById('add-sensor-form').style.display = 'none'; }
-
+// ─── Sensors ───
+function showAddSensor() { document.getElementById('add-sensor-form').style.display='block'; }
+function hideAddSensor() { document.getElementById('add-sensor-form').style.display='none'; }
 function addSensor() {
   const code = document.getElementById('new-sensor-code').value.toUpperCase();
   if (!code || code.length !== 1) { showToast('رمز الحرف مطلوب (حرف واحد)', 'error'); return; }
-  const data = {
-    code, name: document.getElementById('new-sensor-name').value,
-    unit: document.getElementById('new-sensor-unit').value,
-    icon: document.getElementById('new-sensor-icon').value,
-    min_val: parseFloat(document.getElementById('new-sensor-min').value),
-    max_val: parseFloat(document.getElementById('new-sensor-max').value),
-    warn_high: parseFloat(document.getElementById('new-sensor-warn-high').value),
-    warn_low: parseFloat(document.getElementById('new-sensor-warn-low').value),
-    color: document.getElementById('new-sensor-color').value
-  };
-  socket.emit('sensor_add', data);
+  socket.emit('sensor_add', { code, name: document.getElementById('new-sensor-name').value, unit: document.getElementById('new-sensor-unit').value, icon: document.getElementById('new-sensor-icon').value, min_val: parseFloat(document.getElementById('new-sensor-min').value), max_val: parseFloat(document.getElementById('new-sensor-max').value), warn_high: parseFloat(document.getElementById('new-sensor-warn-high').value), warn_low: parseFloat(document.getElementById('new-sensor-warn-low').value), color: document.getElementById('new-sensor-color').value });
   showToast('تم إضافة الحساس: ' + code);
   hideAddSensor();
 }
-
 socket.on('sensor_list', (sensors) => {
-  const el = document.getElementById('sensor-list');
-  el.innerHTML = sensors.map(s => `
-    <div class="card" style="margin-bottom:8px;padding:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>${s.icon} ${s.name}</strong> <span style="color:var(--text2)">[${s.code}]</span></div>
-        <button class="btn btn-danger btn-sm" onclick="socket.emit('sensor_remove','${s.code}')">🗑️</button>
-      </div>
-      <div style="color:var(--text2);font-size:.8rem;margin-top:4px">${s.min_val} - ${s.max_val} ${s.unit} | تحذير: <${s.warn_low} >${s.warn_high}</div>
-    </div>`).join('');
+  document.getElementById('sensor-list').innerHTML = sensors.map(s => `<div class="card" style="margin-bottom:8px;padding:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div><strong>${s.icon} ${s.name}</strong> <span style="color:var(--text2)">[${s.code}]</span></div><button class="btn btn-danger btn-sm" onclick="socket.emit('sensor_remove','${s.code}')">🗑️</button></div><div style="color:var(--text2);font-size:.8rem;margin-top:4px">${s.min_value||s.min_val||0} - ${s.max_value||s.max_val||100} ${s.unit}</div></div>`).join('');
 });
 
-// Scenarios
-function refreshScenarios() { socket.emit('get_scenarios'); }
-
-socket.on('scenario_list', (list) => {
+// ─── Scenarios ───
+function refreshScenarios() { socket.emit('scenario_list'); }
+socket.on('scenarios_list', (list) => {
   const el = document.getElementById('scenario-list');
-  if (!list.length) { el.innerHTML = '<div style="text-align:center;color:var(--text2);padding:20px">لا توجد سيناريوهات محفوظة</div>'; return; }
-  el.innerHTML = list.map(s => `
-    <div class="scenario-item">
-      <h4>${s.name}</h4>
-      <p style="color:var(--text2);font-size:.85rem">${s.description || ''}</p>
-      <div style="margin-top:8px">
-        <button class="btn btn-success btn-sm" onclick="socket.emit('run_scenario','${s.name}')">▶️ تشغيل</button>
-        <button class="btn btn-danger btn-sm" onclick="socket.emit('delete_scenario','${s.name}')">🗑️ حذف</button>
-      </div>
-    </div>`).join('');
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;color:var(--text2);padding:20px">لا توجد سيناريوهات</div>'; return; }
+  el.innerHTML = list.map(s => `<div class="scenario-item"><h4>${typeof s==='string'?s:s.name}</h4><div style="margin-top:8px"><button class="btn btn-success btn-sm" onclick="socket.emit('scenario_run',{name:'${typeof s==='string'?s:s.name}'})">▶️</button><button class="btn btn-danger btn-sm" onclick="socket.emit('scenario_delete',{name:'${typeof s==='string'?s:s.name}'})">🗑️</button></div></div>`).join('');
 });
-
 function saveScenario() {
   const name = document.getElementById('scenario-name').value;
-  if (!name) { showToast('يجب إدخال اسم السيناريو', 'error'); return; }
-  try {
-    const steps = JSON.parse(document.getElementById('scenario-steps').value || '[]');
-    socket.emit('create_scenario', {
-      name, description: document.getElementById('scenario-desc').value,
-      steps, loop: document.getElementById('scenario-loop').checked
+  if (!name) { showToast('يجب إدخال اسم', 'error'); return; }
+  try { const steps = JSON.parse(document.getElementById('scenario-steps').value||'[]'); socket.emit('scenario_save', { name, description: document.getElementById('scenario-desc').value, steps, loop: document.getElementById('scenario-loop').checked }); showToast('تم حفظ السيناريو'); } catch(e) { showToast('خطأ في JSON: '+e.message,'error'); }
+}
+
+// ─── Servo test (Motors tab) ───
+function testServo(s) { const a=parseInt(document.getElementById(s==='s1'?'servo1-center':'servo2-center').value); socket.emit('servo_control',{servo:s.toUpperCase(),angle:a}); showToast(`اختبار ${s}: ${a}°`); }
+function centerServos() { socket.emit('move',{s1:90,s2:90}); showToast('تم توسيط السيرفو'); }
+
+// ═══════════════════════════════════════════════════
+//          CALIBRATION WIZARD (Motor)
+// ═══════════════════════════════════════════════════
+
+const mwState = {
+  phase: 'idle',        // idle | port_id | dir_cal | done
+  currentPort: 1,
+  portMap: {},          // port# → wheel (FL/FR/RL/RR)
+  invertMap: { FL:0, FR:0, RL:0, RR:0 },
+  assignedWheels: [],   // wheels already assigned
+  dirPhaseWheel: 0,     // index in wheelOrder for dir phase
+  wheelOrder: ['FL','FR','RL','RR'],
+  pendingChanges: []
+};
+
+function mwSetPhasePanel(p) {
+  ['mw-phase-1','mw-phase-2','mw-phase-3'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('mw-phase-'+p).classList.add('active');
+}
+function mwSetStep(s) {
+  ['mw-step-1','mw-step-2','mw-step-3'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('active','done');
+    if (i+1 < s) el.classList.add('done');
+    else if (i+1 === s) el.classList.add('active');
+  });
+}
+function mwUpdateProgress() {
+  const total = 8; // 4 ports + 4 dirs
+  let done = Object.keys(mwState.portMap).length;
+  if (mwState.phase === 'dir_cal') done += mwState.dirPhaseWheel;
+  if (mwState.phase === 'done') done = total;
+  const pct = Math.round(done / total * 100);
+  document.getElementById('mw-progress').style.width = pct + '%';
+  document.getElementById('mw-progress-label').textContent = `${done} / ${total} خطوة مكتملة (${pct}%)`;
+}
+
+function mwStart() {
+  mwState.phase = 'port_id'; mwState.currentPort = 1;
+  mwState.portMap = {}; mwState.assignedWheels = [];
+  mwState.invertMap = { FL:0, FR:0, RL:0, RR:0 };
+  mwState.dirPhaseWheel = 0; mwState.pendingChanges = [];
+  mwSetPhasePanel(1); mwSetStep(1);
+  document.getElementById('mw-cur-port').textContent = 1;
+  document.getElementById('mw-start-btn').style.display = 'none';
+  document.getElementById('mw-reset-btn').style.display = 'inline-block';
+  document.getElementById('mw-summary').style.display = 'none';
+  ['wb-FL','wb-FR','wb-RL','wb-RR'].forEach(id => { const el=document.getElementById(id); el.className='wheel-box'; });
+  mwUpdateProgress();
+  showToast('ابدأ بتشغيل المنفذ 1', 'success');
+}
+
+function mwRunPort() {
+  if (mwState.phase !== 'port_id') return;
+  document.getElementById('mw-run-port-btn').disabled = true;
+  socket.emit('calib_run_port', { port: mwState.currentPort, spd: 180, ms: 800 });
+  // تأشيرة بصرية
+  const box = document.getElementById('mw-run-port-btn');
+  box.textContent = '⏳ يعمل...';
+  setTimeout(() => {
+    document.getElementById('mw-run-port-btn').disabled = false;
+    document.getElementById('mw-run-port-btn').innerHTML = `▶️ تشغيل المنفذ <span id="mw-cur-port">${mwState.currentPort}</span>`;
+    showToast(`المنفذ ${mwState.currentPort} تحرّك — اختر العجلة المناسبة`, 'success');
+  }, 1100);
+}
+
+function mwSelectWheel(wheel) {
+  if (mwState.phase !== 'port_id') return;
+  if (mwState.assignedWheels.includes(wheel)) { showToast('هذه العجلة محددة بالفعل! اختر أخرى', 'error'); return; }
+
+  mwState.portMap[mwState.currentPort] = wheel;
+  mwState.assignedWheels.push(wheel);
+  const el = document.getElementById('wb-'+wheel);
+  el.className = 'wheel-box mapped';
+  el.innerHTML = `${wheel}<br><small>M${mwState.currentPort}</small>`;
+
+  mwState.pendingChanges.push(`M${mwState.currentPort} → ${wheel}`);
+  showToast(`✅ المنفذ ${mwState.currentPort} = ${wheel}`, 'success');
+
+  if (mwState.currentPort < 4) {
+    mwState.currentPort++;
+    document.getElementById('mw-cur-port').textContent = mwState.currentPort;
+    mwUpdateProgress();
+  } else {
+    // انتقل لمرحلة الاتجاه
+    mwState.phase = 'dir_cal'; mwState.dirPhaseWheel = 0;
+    mwSetPhasePanel(2); mwSetStep(2);
+    mwUpdateDirPhase();
+    mwUpdateProgress();
+    showToast('الآن سنضبط اتجاه كل عجلة', 'success');
+  }
+}
+
+function mwUpdateDirPhase() {
+  const w = mwState.wheelOrder[mwState.dirPhaseWheel];
+  document.getElementById('mw-dir-wheel').textContent = w;
+  document.getElementById('mw-dir-wheel-2').textContent = w;
+}
+
+function mwTestDir() {
+  if (mwState.phase !== 'dir_cal') return;
+  const w = mwState.wheelOrder[mwState.dirPhaseWheel];
+  socket.emit('calib_test_dir', { wheel: w, spd: 180, ms: 800 });
+  showToast(`اختبار اتجاه ${w}...`, 'success');
+}
+
+function mwSetInvert(inv) {
+  if (mwState.phase !== 'dir_cal') return;
+  const w = mwState.wheelOrder[mwState.dirPhaseWheel];
+  mwState.invertMap[w] = inv;
+  socket.emit('calib_set_invert', { wheel: w, invert: inv });
+  if (inv) mwState.pendingChanges.push(`${w} معكوس`);
+  showToast(inv ? `↩️ تم عكس اتجاه ${w}` : `✅ ${w} اتجاهه صحيح`, 'success');
+
+  mwState.dirPhaseWheel++;
+  mwUpdateProgress();
+  if (mwState.dirPhaseWheel < 4) {
+    mwUpdateDirPhase();
+  } else {
+    // أرسل خريطة الربط للأردوينو
+    const mapCmd = { FL:null, FR:null, RL:null, RR:null };
+    for (const [port, wheel] of Object.entries(mwState.portMap)) mapCmd[wheel] = parseInt(port);
+    socket.emit('calib_set_map', mapCmd);
+    mwState.phase = 'done';
+    mwSetPhasePanel(3); mwSetStep(3);
+    mwUpdateProgress();
+    mwShowSummary();
+    showToast('🎉 معايرة المحركات مكتملة! لا تنسَ الحفظ', 'success');
+    updatePendingChanges();
+  }
+}
+
+function mwShowSummary() {
+  const el = document.getElementById('mw-summary');
+  el.style.display = 'block';
+  const content = document.getElementById('mw-summary-content');
+  const wheelNames = {FL:'أمامي يسار',FR:'أمامي يمين',RL:'خلفي يسار',RR:'خلفي يمين'};
+  content.innerHTML = Object.entries(mwState.portMap).map(([port,wheel]) => `
+    <div style="background:var(--card);border-radius:6px;padding:8px;border:1px solid var(--border)">
+      <span style="color:var(--text2)">M${port}</span> →
+      <strong style="color:var(--accent)">${wheel}</strong> (${wheelNames[wheel]})
+      ${mwState.invertMap[wheel] ? '<span class="warn-badge">معكوس</span>' : '<span class="success-badge">صحيح</span>'}
+    </div>`).join('');
+}
+
+function mwReset() {
+  mwState.phase = 'idle';
+  mwSetPhasePanel(1); mwSetStep(1);
+  document.getElementById('mw-start-btn').style.display = 'inline-block';
+  document.getElementById('mw-reset-btn').style.display = 'none';
+  document.getElementById('mw-progress').style.width = '0%';
+  document.getElementById('mw-progress-label').textContent = ' ';
+  document.getElementById('mw-summary').style.display = 'none';
+  document.getElementById('mw-cur-port').textContent = 1;
+  ['wb-FL','wb-FR','wb-RL','wb-RR'].forEach(id => {
+    const el=document.getElementById(id); el.className='wheel-box';
+    const wheel=id.replace('wb-',''); el.innerHTML=`${wheel}<br><small>${wheel}</small>`;
+  });
+  document.getElementById('wb-FL').innerHTML='أمامي<br>يسار<br><small>FL</small>';
+  document.getElementById('wb-FR').innerHTML='أمامي<br>يمين<br><small>FR</small>';
+  document.getElementById('wb-RL').innerHTML='خلفي<br>يسار<br><small>RL</small>';
+  document.getElementById('wb-RR').innerHTML='خلفي<br>يمين<br><small>RR</small>';
+}
+
+// ═══════════════════════════════════════════════════
+//          CALIBRATION WIZARD (Servo)
+// ═══════════════════════════════════════════════════
+
+const swState = { currentId: 1, invert: 0, pendingChanges: [] };
+
+function swSetPhasePanel(p) {
+  ['sw-phase-1','sw-phase-2','sw-phase-3','sw-phase-4'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('sw-phase-'+p).classList.add('active');
+}
+function swSetStep(s) {
+  ['sw-step-1','sw-step-2','sw-step-3','sw-step-4'].forEach((id,i) => {
+    const el=document.getElementById(id);
+    el.classList.remove('active','done');
+    if (i+1<s) el.classList.add('done'); else if (i+1===s) el.classList.add('active');
+  });
+}
+
+function swStart(id) {
+  swState.currentId = id; swState.invert = 0;
+  document.getElementById('sw-id-label').textContent = 'S'+id;
+  swSetPhasePanel(2); swSetStep(2);
+  showToast(`معايرة S${id} — اضغط تشغيل لتحريكه`, 'success');
+}
+
+function swTestRange() {
+  socket.emit('calib_move_servo', { id: swState.currentId, angle: 0 });
+  setTimeout(() => socket.emit('calib_move_servo', { id: swState.currentId, angle: 90 }), 900);
+  setTimeout(() => socket.emit('calib_move_servo', { id: swState.currentId, angle: 180 }), 1800);
+  showToast('يتحرك: 0° ← 90° ← 180°', 'success');
+}
+
+function swSetInvert(inv) {
+  swState.invert = inv;
+  socket.emit('calib_set_servo', { id: swState.currentId, min: 0, max: 180, center: 90, invert: inv });
+  swSetPhasePanel(3); swSetStep(3);
+  document.getElementById('sw-live-slider').value = 90;
+  document.getElementById('sw-live-angle').textContent = '90';
+  document.getElementById('sw-live-val').textContent = '90°';
+  socket.emit('calib_move_servo', { id: swState.currentId, angle: 90 });
+  showToast(inv ? 'تم عكس الاتجاه' : 'الاتجاه صحيح', 'success');
+}
+
+function swLiveMove(v) {
+  document.getElementById('sw-live-angle').textContent = v;
+  document.getElementById('sw-live-val').textContent = v+'°';
+  socket.emit('calib_move_servo', { id: swState.currentId, angle: parseInt(v) });
+}
+
+function swSetLimitFromSlider(type) {
+  const v = parseInt(document.getElementById('sw-live-slider').value);
+  document.getElementById('sw-'+type).value = v;
+  showToast(`${type==='min'?'الحد الأدنى':type==='max'?'الحد الأعلى':'المركز'} = ${v}°`, 'success');
+}
+
+function swGoCenter() {
+  const c = parseInt(document.getElementById('sw-center').value);
+  document.getElementById('sw-live-slider').value = c;
+  document.getElementById('sw-live-angle').textContent = c;
+  document.getElementById('sw-live-val').textContent = c+'°';
+  socket.emit('calib_move_servo', { id: swState.currentId, angle: c });
+}
+
+function swConfirmLimits() {
+  const mn = parseInt(document.getElementById('sw-min').value);
+  const mx = parseInt(document.getElementById('sw-max').value);
+  const cr = parseInt(document.getElementById('sw-center').value);
+  if (mn >= mx) { showToast('الحد الأدنى يجب أن يكون أصغر من الأعلى', 'error'); return; }
+  if (cr < mn || cr > mx) { showToast('المركز يجب أن يكون بين الحدين', 'error'); return; }
+  socket.emit('calib_set_servo', { id: swState.currentId, min: mn, max: mx, center: cr, invert: swState.invert });
+  const s = swState.currentId;
+  document.getElementById('sw-summary').innerHTML = `<span class="info-badge">S${s}</span> الحد الأدنى: ${mn}° | الأعلى: ${mx}° | المركز: ${cr}° | ${swState.invert?'<span class="warn-badge">معكوس</span>':'<span class="success-badge">اتجاه صحيح</span>'}`;
+  swState.pendingChanges.push(`S${s}: min=${mn} max=${mx} center=${cr} inv=${swState.invert}`);
+  swSetPhasePanel(4); swSetStep(4);
+  showToast(`✅ تم ضبط S${s}! لا تنسَ الحفظ`, 'success');
+  updatePendingChanges();
+}
+
+function swReset() { swStart(swState.currentId); }
+
+// ─── EEPROM actions ───
+function calibGet() {
+  document.getElementById('eeprom-status').className='eeprom-status loading';
+  document.getElementById('eeprom-status').textContent='⏳ جاري تحميل الإعدادات من الأردوينو...';
+  socket.emit('calib_get');
+}
+function calibSave() {
+  socket.emit('calib_save');
+  document.getElementById('save-result').innerHTML='<span class="info-badge">⏳ جاري الحفظ...</span>';
+}
+function calibResetFactory() {
+  if (!confirm('سيتم مسح جميع إعدادات المعايرة وإعادتها للافتراضي. هل أنت متأكد؟')) return;
+  socket.emit('calib_reset');
+  document.getElementById('save-result').innerHTML='<span class="warn-badge">⏳ إعادة الضبط...</span>';
+}
+
+// ─── استقبال إعدادات EEPROM من الأردوينو ───
+socket.on('calib_config', (data) => {
+  if (data.cfg === 'dump') {
+    document.getElementById('eeprom-status').className='eeprom-status synced';
+    document.getElementById('eeprom-status').textContent='✅ تم التحميل من EEPROM بنجاح (نسخة '+data.ver+')';
+    document.getElementById('cfg-display').style.display='block';
+    // محركات
+    ['FL','FR','RL','RR'].forEach(w => {
+      document.getElementById('cfg-port-'+w).textContent = 'M'+(data['port_'+w]||'?');
+      const inv = data['inv_'+w];
+      const invEl = document.getElementById('cfg-inv-'+w);
+      invEl.innerHTML = inv ? '<span class="warn-badge">معكوس</span>' : '<span class="success-badge">صحيح</span>';
     });
-    showToast('تم حفظ السيناريو: ' + name);
-  } catch(e) { showToast('خطأ في JSON: ' + e.message, 'error'); }
+    // سيرفو
+    [1,2].forEach(i => {
+      document.getElementById('cfg-s'+i+'-min').textContent = data['s'+i+'_min']??'—';
+      document.getElementById('cfg-s'+i+'-max').textContent = data['s'+i+'_max']??'—';
+      document.getElementById('cfg-s'+i+'-center').textContent = data['s'+i+'_center']??'—';
+      const invEl = document.getElementById('cfg-s'+i+'-inv');
+      invEl.innerHTML = data['s'+i+'_invert'] ? '<span class="warn-badge">معكوس</span>' : '<span class="success-badge">صحيح</span>';
+    });
+  } else if (data.cfg === 'saved') {
+    document.getElementById('save-result').innerHTML='<span class="success-badge">✅ تم الحفظ في EEPROM بنجاح!</span>';
+    document.getElementById('pending-changes').style.display='none';
+    mwState.pendingChanges=[];
+    showToast('✅ تم الحفظ في EEPROM!', 'success');
+    setTimeout(calibGet, 500);
+  } else if (data.cfg === 'reset_done') {
+    document.getElementById('save-result').innerHTML='<span class="warn-badge">🏭 تمت إعادة الضبط للمصنع</span>';
+    showToast('تمت إعادة الضبط للمصنع', 'error');
+    setTimeout(calibGet, 500);
+  }
+});
+
+function updatePendingChanges() {
+  const all = [...mwState.pendingChanges, ...swState.pendingChanges];
+  if (!all.length) { document.getElementById('pending-changes').style.display='none'; return; }
+  document.getElementById('pending-changes').style.display='block';
+  document.getElementById('pending-list').innerHTML = all.map(c=>`<span class="warn-badge">${c}</span>`).join(' ');
 }
 
-// Servo test
-function testServo(s) {
-  const angle = parseInt(document.getElementById(s === 's1' ? 'servo1-center' : 'servo2-center').value);
-  socket.emit('set_servo', { s1: s === 's1' ? angle : null, s2: s === 's2' ? angle : null });
-  showToast(`اختبار ${s}: ${angle}°`);
-}
-function centerServos() { socket.emit('set_servo', { s1: 90, s2: 90 }); showToast('تم توسيط السيرفو'); }
-
-// Save all
+// ─── Settings save/load ───
 function saveAllSettings() {
   const settings = {
-    bluetooth: {
-      port: document.getElementById('bt-port').value,
-      baud_rate: parseInt(document.getElementById('bt-baud').value),
-      timeout: parseInt(document.getElementById('bt-timeout').value),
-      auto_connect: document.getElementById('bt-autoconnect').checked,
-      auto_reconnect: document.getElementById('bt-autoreconnect').checked,
-      mac_address: document.getElementById('bt-mac').value
-    },
-    camera: {
-      index: parseInt(document.getElementById('cam-index').value),
-      width: parseInt(document.getElementById('cam-width').value),
-      height: parseInt(document.getElementById('cam-height').value),
-      fps: parseInt(document.getElementById('cam-fps').value),
-      quality: parseInt(document.getElementById('cam-quality').value),
-      color_mode: document.getElementById('cam-color-mode').value,
-      rotate_180: document.getElementById('cam-rotate').checked,
-      flip_h: document.getElementById('cam-flip-h').checked,
-      flip_v: document.getElementById('cam-flip-v').checked,
-      edge_detection: document.getElementById('cam-edge').checked,
-      threshold: document.getElementById('cam-threshold').checked,
-      brightness: parseInt(document.getElementById('cam-brightness').value),
-      contrast: parseInt(document.getElementById('cam-contrast').value),
-      saturation: parseInt(document.getElementById('cam-saturation').value)
-    },
-    motors: {
-      default_speed: parseInt(document.getElementById('mot-default-speed').value),
-      min_speed: parseInt(document.getElementById('mot-min-speed').value),
-      ramp_duration: parseInt(document.getElementById('mot-ramp-duration').value),
-      invert_m1: document.getElementById('mot-invert-m1').checked,
-      invert_m2: document.getElementById('mot-invert-m2').checked,
-      servo1_center: parseInt(document.getElementById('servo1-center').value),
-      servo2_center: parseInt(document.getElementById('servo2-center').value),
-      servo1_min: parseInt(document.getElementById('servo1-min').value),
-      servo1_max: parseInt(document.getElementById('servo1-max').value),
-      servo2_min: parseInt(document.getElementById('servo2-min').value),
-      servo2_max: parseInt(document.getElementById('servo2-max').value)
-    },
-    general: {
-      port: parseInt(document.getElementById('gen-port').value),
-      log_level: document.getElementById('gen-log-level').value,
-      auto_start_camera: document.getElementById('gen-auto-start-camera').checked,
-      auto_connect_bluetooth: document.getElementById('gen-auto-connect-bt').checked
-    }
+    bluetooth: { port: document.getElementById('bt-port').value, baud_rate: parseInt(document.getElementById('bt-baud').value), timeout: parseInt(document.getElementById('bt-timeout').value), auto_connect: document.getElementById('bt-autoconnect').checked, auto_reconnect: document.getElementById('bt-autoreconnect').checked, mac_address: document.getElementById('bt-mac').value },
+    camera: { index: parseInt(document.getElementById('cam-index').value), width: parseInt(document.getElementById('cam-width').value), height: parseInt(document.getElementById('cam-height').value), fps: parseInt(document.getElementById('cam-fps').value), quality: parseInt(document.getElementById('cam-quality').value), color_mode: document.getElementById('cam-color-mode').value, rotate_180: document.getElementById('cam-rotate').checked, flip_h: document.getElementById('cam-flip-h').checked, flip_v: document.getElementById('cam-flip-v').checked, edge_detection: document.getElementById('cam-edge').checked, threshold: document.getElementById('cam-threshold').checked, brightness: parseInt(document.getElementById('cam-brightness').value), contrast: parseInt(document.getElementById('cam-contrast').value), saturation: parseInt(document.getElementById('cam-saturation').value) },
+    motors: { default_speed: parseInt(document.getElementById('mot-default-speed').value), min_speed: parseInt(document.getElementById('mot-min-speed').value), ramp_duration: parseInt(document.getElementById('mot-ramp-duration').value), invert_m1: document.getElementById('mot-invert-m1').checked, invert_m2: document.getElementById('mot-invert-m2').checked, servo1_center: parseInt(document.getElementById('servo1-center').value), servo2_center: parseInt(document.getElementById('servo2-center').value), servo1_min: parseInt(document.getElementById('servo1-min').value), servo1_max: parseInt(document.getElementById('servo1-max').value), servo2_min: parseInt(document.getElementById('servo2-min').value), servo2_max: parseInt(document.getElementById('servo2-max').value) },
+    general: { port: parseInt(document.getElementById('gen-port').value), log_level: document.getElementById('gen-log-level').value, auto_start_camera: document.getElementById('gen-auto-start-camera').checked, auto_connect_bluetooth: document.getElementById('gen-auto-connect-bt').checked }
   };
   socket.emit('save_settings', settings);
   showToast('✅ تم حفظ جميع الإعدادات');
 }
 
-function exportSettings() {
-  socket.emit('export_settings');
-}
+function exportSettings() { socket.emit('export_settings'); }
 socket.on('settings_exported', (data) => {
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'robot_settings.json';
-  a.click();
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  a.download = 'robot_settings.json'; a.click();
   showToast('تم تصدير الإعدادات');
 });
-
 function importSettings(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+  const file = event.target.files[0]; if (!file) return;
   const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      socket.emit('import_settings', data);
-      showToast('تم استيراد الإعدادات');
-      loadSettings(data);
-    } catch(err) { showToast('خطأ في الملف', 'error'); }
-  };
+  reader.onload = (e) => { try { const data=JSON.parse(e.target.result); socket.emit('import_settings',data); showToast('تم استيراد الإعدادات'); loadSettings(data); } catch(err) { showToast('خطأ في الملف','error'); } };
   reader.readAsText(file);
 }
-
-function resetSettings() {
-  if (confirm('هل أنت متأكد من إعادة التعيين؟')) {
-    socket.emit('reset_settings');
-    showToast('تم إعادة التعيين');
-  }
-}
+function resetSettings() { if (confirm('هل أنت متأكد؟')) { socket.emit('reset_settings'); showToast('تم إعادة التعيين'); } }
 
 function loadSettings(s) {
   if (!s) return;
-  const bt = s.bluetooth || {};
-  document.getElementById('bt-port').value = bt.port || '/dev/rfcomm0';
-  document.getElementById('bt-baud').value = bt.baud_rate || 115200;
-  document.getElementById('bt-timeout').value = bt.timeout || 5;
-  document.getElementById('bt-autoconnect').checked = bt.auto_connect || false;
-  document.getElementById('bt-autoreconnect').checked = bt.auto_reconnect || false;
-  document.getElementById('bt-mac').value = bt.mac_address || '';
-
-  const cam = s.camera || {};
-  document.getElementById('cam-index').value = cam.index || 0;
-  document.getElementById('cam-width').value = cam.width || 640;
-  document.getElementById('cam-height').value = cam.height || 480;
-  document.getElementById('cam-fps').value = cam.fps || 20;
-  document.getElementById('cam-quality').value = cam.quality || 70;
-  document.getElementById('cam-color-mode').value = cam.color_mode || 'rgb';
-  document.getElementById('cam-rotate').checked = cam.rotate_180 || false;
-  document.getElementById('cam-flip-h').checked = cam.flip_h || false;
-  document.getElementById('cam-flip-v').checked = cam.flip_v || false;
-  document.getElementById('cam-edge').checked = cam.edge_detection || false;
-  document.getElementById('cam-threshold').checked = cam.threshold || false;
-  document.getElementById('cam-brightness').value = cam.brightness || 0;
-  document.getElementById('cam-contrast').value = cam.contrast || 0;
-  document.getElementById('cam-saturation').value = cam.saturation || 100;
-
-  const mot = s.motors || {};
-  document.getElementById('mot-default-speed').value = mot.default_speed || 150;
-  document.getElementById('mot-min-speed').value = mot.min_speed || 50;
-  document.getElementById('mot-ramp-duration').value = mot.ramp_duration || 500;
-  document.getElementById('mot-invert-m1').checked = mot.invert_m1 || false;
-  document.getElementById('mot-invert-m2').checked = mot.invert_m2 || false;
-  document.getElementById('servo1-center').value = mot.servo1_center || 90;
-  document.getElementById('servo2-center').value = mot.servo2_center || 90;
-  document.getElementById('servo1-min').value = mot.servo1_min || 0;
-  document.getElementById('servo1-max').value = mot.servo1_max || 180;
-  document.getElementById('servo2-min').value = mot.servo2_min || 0;
-  document.getElementById('servo2-max').value = mot.servo2_max || 180;
-
-  const gen = s.general || {};
-  document.getElementById('gen-port').value = gen.port || 5000;
-  document.getElementById('gen-log-level').value = gen.log_level || 'INFO';
-  document.getElementById('gen-auto-start-camera').checked = gen.auto_start_camera || false;
-  document.getElementById('gen-auto-connect-bt').checked = gen.auto_connect_bluetooth || false;
+  const bt=s.bluetooth||{}; const cam=s.camera||{}; const mot=s.motors||{}; const gen=s.general||{};
+  const safe=(id,v)=>{ const el=document.getElementById(id); if(el&&v!==undefined)el.value=v; };
+  const safeChk=(id,v)=>{ const el=document.getElementById(id); if(el)el.checked=!!v; };
+  safe('bt-port', bt.port||'/dev/rfcomm0'); safe('bt-baud', bt.baud_rate||9600); safe('bt-timeout', bt.timeout||5); safeChk('bt-autoconnect',bt.auto_connect); safeChk('bt-autoreconnect',bt.auto_reconnect); safe('bt-mac',bt.mac_address||'');
+  safe('cam-index',cam.index||0); safe('cam-width',cam.width||640); safe('cam-height',cam.height||480); safe('cam-fps',cam.fps||20); safe('cam-quality',cam.quality||70); safe('cam-color-mode',cam.color_mode||'rgb');
+  safeChk('cam-rotate',cam.rotate_180); safeChk('cam-flip-h',cam.flip_h); safeChk('cam-flip-v',cam.flip_v); safeChk('cam-edge',cam.edge_detection); safeChk('cam-threshold',cam.threshold);
+  safe('cam-brightness',cam.brightness||0); safe('cam-contrast',cam.contrast||0); safe('cam-saturation',cam.saturation||100);
+  safe('mot-default-speed',mot.default_speed||150); safe('mot-min-speed',mot.min_speed||50); safe('mot-ramp-duration',mot.ramp_duration||500);
+  safeChk('mot-invert-m1',mot.invert_m1); safeChk('mot-invert-m2',mot.invert_m2);
+  safe('servo1-center',mot.servo1_center||90); safe('servo2-center',mot.servo2_center||90);
+  safe('servo1-min',mot.servo1_min||0); safe('servo1-max',mot.servo1_max||180);
+  safe('servo2-min',mot.servo2_min||0); safe('servo2-max',mot.servo2_max||180);
+  safe('gen-port',gen.port||5000); safe('gen-log-level',gen.log_level||'INFO');
+  safeChk('gen-auto-start-camera',gen.auto_start_camera); safeChk('gen-auto-connect-bt',gen.auto_connect_bluetooth);
+  // تحديث عرض range vals
+  document.querySelectorAll('input[type=range]').forEach(r => { const v=document.getElementById(r.id+'-val'); if(v) v.textContent=r.value+(r.id.includes('servo')&&r.id.includes('center')?'°':''); });
 }
 
-// Init
-socket.on('connect', () => {
-  socket.emit('get_settings');
-  socket.emit('get_scenarios');
-});
+// ─── Init ───
+socket.on('connect', () => { socket.emit('get_settings'); socket.emit('scenario_list'); });
 socket.on('settings_loaded', loadSettings);
-socket.on('error', (msg) => showToast(msg, 'error'));
+socket.on('log', (d) => { if(d.level==='error') showToast(d.message,'error'); });
 </script>
 </body>
 </html>

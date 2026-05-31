@@ -35,7 +35,9 @@ class BluetoothManager:
         self._monitor_thread = None
         self._reader_thread = None
         self._running = False
-        self._socketio = None  # يُعين لاحقاً من app.py
+        self._socketio = None       # يُعين لاحقاً من app.py
+        self._sensor_manager = None  # يُعين لاحقاً من app.py (F9)
+        self._last_hb = 0            # وقت آخر heartbeat من الأردوينو (F9)
 
     # ─────────────────────────── بحث ───────────────────────────
 
@@ -301,14 +303,47 @@ class BluetoothManager:
             time.sleep(5)
 
     def _data_reader_loop(self):
-        """يقرأ بيانات الحساسات من السيريال باستمرار"""
+        """يقرأ البيانات الواردة من الأردوينو ويوجّهها حسب نوعها (F9)"""
+        # أكواد الحساسات المعتمدة من البروتوكول الموحّد (04_json_protocol.md)
+        SENSOR_CODES = {"T", "H", "G", "D", "R", "L", "P"}
+
         while self._running:
             try:
                 if self.is_connected and self._serial_comm:
                     data = self.read_json(timeout=0.5)
-                    if data and isinstance(data, dict):
+                    if not isinstance(data, dict):
+                        continue
+
+                    if "hb" in data:
+                        # نبضة حياة من الأردوينو
+                        self._last_hb = time.time()
+
+                    elif "err" in data:
+                        # إشعار خطأ من الأردوينو
+                        logger.warning("Arduino error: %s", data.get("err"))
                         if self._socketio:
-                            self._socketio.emit("sensor_data", data)
+                            self._socketio.emit("log", {
+                                "level": "error",
+                                "message": f"Arduino: {data.get('err')}",
+                            })
+
+                    elif "cfg" in data:
+                        # ردود معايرة EEPROM (dump/saved/reset_done)
+                        if self._socketio:
+                            self._socketio.emit("calib_config", data)
+
+                    else:
+                        # قراءات حساسات — مرشَّحة بأكواد البروتوكول
+                        readings = {k: v for k, v in data.items() if k in SENSOR_CODES}
+                        if readings:
+                            if self._sensor_manager is not None:
+                                try:
+                                    self._sensor_manager.update(readings)
+                                except Exception as e:
+                                    logger.error("sensor_manager.update error: %s", e)
+                            if self._socketio:
+                                self._socketio.emit("sensor_data", readings)
+
             except Exception as e:
                 logger.debug(f"Reader error: {e}")
 
