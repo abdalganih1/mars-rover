@@ -1,0 +1,105 @@
+server:
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+  secret_key: "robot-control-secret-key"
+  max_connections: 5
+  cors_enabled: true
+
+bluetooth:
+  device_name: "HC-05"
+  device_address: ""
+  rfcomm_port: 0
+  serial_port: "/dev/rfcomm0"
+  baudrate: 9600
+  auto_connect_on_start: false
+  auto_reconnect: false
+  reconnect_attempts: 5
+  reconnect_delay: 3
+  scan_timeout: 10
+  connection_timeout: 10
+
+camera:
+  enabled: true
+  camera_index: 0
+  width: 640
+  height: 480
+  fps: 24
+  jpeg_quality: 70
+  default_color_mode: "RGB"
+  brightness: 50
+  contrast: 50
+  saturation: 50
+  edge_detection: false
+  blur: false
+  blur_kernel: 5
+  resize_factor: 1.0
+  roi_enabled: false
+  roi_rect: [0, 0, 640, 480]
+  threshold_value: 128
+  recording_path: "/home/user/program/recordings"
+  photo_path: "/home/user/program/photos"
+
+motors:
+  default_speed: 200
+  max_speed: 255
+  turn_speed: 150
+  servo:
+    center: 90
+    min: 0
+    max: 180
+    left_angle: 0
+    right_angle: 180
+  dc:
+    count: 2
+  safety:
+    ramp_enabled: true
+    heartbeat_enabled: true
+    heartbeat_interval: 2000
+
+sensors:
+  history_max: 100
+  update_interval: 0.5
+  warning_notifications: true
+  definitions:
+    - code: "T"
+      name: "Temperature"
+      unit: "°C"
+      icon: "🌡️"
+      min: -40
+      max: 125
+      warn_high: 80
+      warn_low: 0
+      color: "#e74c3c"
+    - code: "H"
+      name: "Humidity"
+      unit: "%"
+      icon: "💧"
+      min: 0
+      max: 100
+      warn_high: 90
+      warn_low: 10
+      color: "#3498db"
+    - code: "G"
+      name: "Gas"
+      unit: "ppm"
+      icon: "💨"
+      min: 0
+      max: 1000
+      warn_high: 300
+      warn_low: null
+      color: "#f39c12"
+    - code: "D"
+      name: "Distance"
+      unit: "cm"
+      icon: "📏"
+      min: 2
+      max: 400
+      warn_high: null
+      warn_low: 10
+      color: "#9b59b6"
+
+logging:
+  level: "INFO"
+  file: "/home/user/program/logs/app.log"
+  max_size_mb: 10

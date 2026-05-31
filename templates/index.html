@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🤖 Robot Control</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: #0a0a0a;
+  color: #e0e0e0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* ===== HEADER ===== */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #111 0%, #1a1a1a 100%);
+  border-bottom: 1px solid #2a2a2a;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+header h1 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.settings-link {
+  color: #e0e0e0;
+  text-decoration: none;
+  font-size: 1.4rem;
+  transition: color 0.2s;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+.settings-link:hover { color: #4fc3f7; background: rgba(79,195,247,0.1); }
+.conn-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #888;
+}
+.status-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #f44336;
+  transition: background 0.3s;
+  box-shadow: 0 0 6px rgba(244,67,54,0.5);
+}
+.status-dot.connected {
+  background: #4caf50;
+  box-shadow: 0 0 8px rgba(76,175,80,0.6);
+}
+.status-dot.connecting {
+  background: #ff9800;
+  box-shadow: 0 0 8px rgba(255,152,0,0.6);
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ===== MAIN CONTAINER ===== */
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ===== SECTION CARD ===== */
+.section {
+  background: #141414;
+  border: 1px solid #222;
+  border-radius: 12px;
+  padding: 16px;
+}
+.section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #888;
+  margin-bottom: 12px;
+}
+
+/* ===== CAMERA FEED ===== */
+.camera-wrapper {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  aspect-ratio: 4/3;
+}
+#camera-feed {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.camera-overlay {
+  position: absolute;
+  top: 8px; left: 8px;
+  font-size: 0.7rem;
+  color: #fff;
+  background: rgba(0,0,0,0.5);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.camera-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+/* ===== SENSORS BAR ===== */
+#sensors-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sensor-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1e1e1e;
+  border: 1px solid #2a2a2a;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  transition: border-color 0.3s;
+}
+.sensor-badge .icon { font-size: 1rem; }
+.sensor-badge .label { color: #888; font-size: 0.7rem; }
+.sensor-badge .value { font-weight: 600; color: #4fc3f7; }
+
+/* ===== MOVEMENT CONTROLS ===== */
+.move-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 8px;
+  max-width: 260px;
+  margin: 0 auto;
+  aspect-ratio: 1;
+}
+.move-btn {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  border: 2px solid #333;
+  background: #1a1a1a;
+  color: #e0e0e0;
+  font-size: 1.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.move-btn:hover { border-color: #4fc3f7; background: #1e2a30; }
+.move-btn:active, .move-btn.active {
+  background: #4fc3f7;
+  color: #0a0a0a;
+  border-color: #4fc3f7;
+  box-shadow: 0 0 16px rgba(79,195,247,0.4);
+  transform: scale(0.95);
+}
+.move-btn.stop-btn {
+  background: #2a1a1a;
+  border-color: #661a1a;
+  font-size: 1.4rem;
+}
+.move-btn.stop-btn:hover { border-color: #f44336; background: #3a1a1a; }
+.move-btn.stop-btn:active, .move-btn.stop-btn.active {
+  background: #f44336;
+  border-color: #f44336;
+  box-shadow: 0 0 16px rgba(244,67,54,0.4);
+}
+.move-empty { visibility: hidden; }
+.kb-hint {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 0.7rem;
+  color: #555;
+}
+
+/* ===== SLIDERS ===== */
+.slider-group { margin-bottom: 14px; }
+.slider-group:last-child { margin-bottom: 0; }
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.slider-label { font-size: 0.85rem; font-weight: 500; }
+.slider-value {
+  font-size: 0.85rem;
+  color: #4fc3f7;
+  font-weight: 600;
+  min-width: 40px;
+  text-align: right;
+}
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #2a2a2a;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #4fc3f7;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(79,195,247,0.3);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #4fc3f7;
+  cursor: pointer;
+  border: none;
+}
+
+/* ===== LINK CHECKBOX ===== */
+.link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #222;
+}
+.link-row input[type="checkbox"] {
+  accent-color: #4fc3f7;
+  width: 16px; height: 16px;
+}
+.link-row label {
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #aaa;
+}
+
+/* ===== SERVO CONTROLS ===== */
+.servo-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.servo-row:last-child { margin-bottom: 0; }
+.servo-dial {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  border: 2px solid #333;
+  background: #1a1a1a;
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.servo-needle {
+  position: absolute;
+  bottom: 50%; left: 50%;
+  width: 2px;
+  height: 24px;
+  background: #4fc3f7;
+  transform-origin: bottom center;
+  transform: translateX(-50%) rotate(0deg);
+  transition: transform 0.15s;
+  border-radius: 1px;
+  box-shadow: 0 0 4px rgba(79,195,247,0.4);
+}
+.servo-center {
+  position: absolute;
+  width: 6px; height: 6px;
+  background: #4fc3f7;
+  border-radius: 50%;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+.servo-info {
+  flex: 1;
+}
+.servo-angle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #4fc3f7;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+/* ===== SCENARIO ===== */
+.scenario-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.scenario-select {
+  flex: 1;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  color: #e0e0e0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.scenario-select:focus { border-color: #4fc3f7; outline: none; }
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-run {
+  background: #2e7d32;
+  color: #fff;
+}
+.btn-run:hover { background: #388e3c; }
+.btn-stop-scenario {
+  background: #c62828;
+  color: #fff;
+}
+.btn-stop-scenario:hover { background: #d32f2f; }
+.progress-wrapper {
+  height: 6px;
+  background: #2a2a2a;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #4fc3f7, #00e676);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+.progress-text {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 4px;
+  text-align: center;
+}
+
+/* ===== LOG AREA ===== */
+.log-area {
+  background: #0d0d0d;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 10px;
+  max-height: 180px;
+  overflow-y: auto;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.log-entry {
+  padding: 2px 0;
+  border-bottom: 1px solid #1a1a1a;
+}
+.log-entry:last-child { border-bottom: none; }
+.log-time { color: #555; }
+.log-info { color: #4fc3f7; }
+.log-error { color: #f44336; }
+.log-success { color: #4caf50; }
+.log-warn { color: #ff9800; }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #444; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 400px) {
+  .container { padding: 8px; }
+  .section { padding: 12px; }
+  header h1 { font-size: 1rem; }
+  .move-grid { max-width: 220px; }
+  .move-btn { font-size: 1.3rem; }
+  .sensor-badge { padding: 4px 8px; font-size: 0.7rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <h1>🤖 Robot Control</h1>
+  <div class="header-right">
+    <a href="/settings" class="settings-link" title="Settings">⚙️</a>
+    <div class="conn-status">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">Disconnected</span>
+    </div>
+  </div>
+</header>
+
+<!-- ===== MAIN ===== -->
+<div class="container">
+
+  <!-- Camera Feed -->
+  <div class="section">
+    <div class="section-title">📷 Camera Feed</div>
+    <div class="camera-wrapper">
+      <img id="camera-feed" alt="Camera Feed" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
+      <div class="camera-placeholder" id="camera-placeholder">Waiting for camera...</div>
+    </div>
+  </div>
+
+  <!-- Sensors Bar -->
+  <div class="section">
+    <div class="section-title">📡 Sensors</div>
+    <div id="sensors-bar">
+      <div class="sensor-badge" id="sensor-temp">
+        <span class="icon">🌡️</span>
+        <span class="label">Temp</span>
+        <span class="value">--</span>
+      </div>
+      <div class="sensor-badge" id="sensor-humidity">
+        <span class="icon">💧</span>
+        <span class="label">Hum</span>
+        <span class="value">--</span>
+      </div>
+      <div class="sensor-badge" id="sensor-distance">
+        <span class="icon">📏</span>
+        <span class="label">Dist</span>
+        <span class="value">--</span>
+      </div>
+      <div class="sensor-badge" id="sensor-battery">
+        <span class="icon">🔋</span>
+        <span class="label">Batt</span>
+        <span class="value">--</span>
+      </div>
+      <div class="sensor-badge" id="sensor-light">
+        <span class="icon">☀️</span>
+        <span class="label">Light</span>
+        <span class="value">--</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Movement Controls -->
+  <div class="section">
+    <div class="section-title">🎮 Movement</div>
+    <div class="move-grid">
+      <div class="move-empty"></div>
+      <button class="move-btn" id="btn-fwd" data-dir="F" aria-label="Forward">▲</button>
+      <div class="move-empty"></div>
+      <button class="move-btn" id="btn-left" data-dir="L" aria-label="Left">◄</button>
+      <button class="move-btn stop-btn" id="btn-stop" data-dir="S" aria-label="Stop">⬛</button>
+      <button class="move-btn" id="btn-right" data-dir="R" aria-label="Right">►</button>
+      <div class="move-empty"></div>
+      <button class="move-btn" id="btn-back" data-dir="B" aria-label="Backward">▼</button>
+      <div class="move-empty"></div>
+    </div>
+    <div class="kb-hint">Keyboard: W/A/S/D or Arrow Keys</div>
+  </div>
+
+  <!-- Speed Sliders -->
+  <div class="section">
+    <div class="section-title">⚡ Speed Control</div>
+    <div class="slider-group">
+      <div class="slider-header">
+        <span class="slider-label">Global Speed</span>
+        <span class="slider-value" id="global-speed-val">150</span>
+      </div>
+      <input type="range" id="global-speed" min="0" max="255" value="150">
+    </div>
+    <div class="slider-group">
+      <div class="slider-header">
+        <span class="slider-label">M1 Speed</span>
+        <span class="slider-value" id="m1-speed-val">0</span>
+      </div>
+      <input type="range" id="m1-speed" min="-255" max="255" value="0">
+    </div>
+    <div class="slider-group">
+      <div class="slider-header">
+        <span class="slider-label">M2 Speed</span>
+        <span class="slider-value" id="m2-speed-val">0</span>
+      </div>
+      <input type="range" id="m2-speed" min="-255" max="255" value="0">
+    </div>
+    <div class="link-row">
+      <input type="checkbox" id="link-motors" checked>
+      <label for="link-motors">Link M1 &amp; M2</label>
+    </div>
+  </div>
+
+  <!-- Servo Controls -->
+  <div class="section">
+    <div class="section-title">🔧 Servo Control</div>
+    <div class="servo-row">
+      <div class="servo-dial" id="servo-dial-1">
+        <div class="servo-needle" id="servo-needle-1"></div>
+        <div class="servo-center"></div>
+      </div>
+      <div class="servo-info">
+        <div class="slider-header">
+          <span class="slider-label">Servo 1</span>
+          <span class="servo-angle" id="s1-angle">90°</span>
+        </div>
+        <input type="range" id="servo-s1" min="0" max="180" value="90">
+      </div>
+    </div>
+    <div class="servo-row">
+      <div class="servo-dial" id="servo-dial-2">
+        <div class="servo-needle" id="servo-needle-2"></div>
+        <div class="servo-center"></div>
+      </div>
+      <div class="servo-info">
+        <div class="slider-header">
+          <span class="slider-label">Servo 2</span>
+          <span class="servo-angle" id="s2-angle">90°</span>
+        </div>
+        <input type="range" id="servo-s2" min="0" max="180" value="90">
+      </div>
+    </div>
+  </div>
+
+  <!-- Scenario -->
+  <div class="section">
+    <div class="section-title">🎬 Scenario</div>
+    <div class="scenario-row">
+      <select class="scenario-select" id="scenario-list">
+        <option value="">-- Select Scenario --</option>
+      </select>
+      <button class="btn btn-run" id="btn-scenario-run">▶ Run</button>
+      <button class="btn btn-stop-scenario" id="btn-scenario-stop">⏹ Stop</button>
+    </div>
+    <div class="progress-wrapper">
+      <div class="progress-bar" id="scenario-progress"></div>
+    </div>
+    <div class="progress-text" id="scenario-progress-text">Ready</div>
+  </div>
+
+  <!-- Log Area -->
+  <div class="section">
+    <div class="section-title">📋 Log</div>
+    <div class="log-area" id="log-area"></div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== Socket.IO Connection =====
+  const socket = io({ transports: ['websocket', 'polling'] });
+  const statusDot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+
+  socket.on('connect', () => {
+    statusDot.className = 'status-dot connected';
+    statusText.textContent = 'Connected';
+    addLog('Connected to server', 'success');
+  });
+
+  socket.on('disconnect', (reason) => {
+    statusDot.className = 'status-dot';
+    statusText.textContent = 'Disconnected';
+    addLog('Disconnected: ' + reason, 'error');
+  });
+
+  socket.on('connect_error', (err) => {
+    statusDot.className = 'status-dot';
+    statusText.textContent = 'Error';
+    addLog('Connection error: ' + err.message, 'error');
+  });
+
+  // ===== Camera Feed =====
+  const cameraFeed = document.getElementById('camera-feed');
+  const cameraPlaceholder = document.getElementById('camera-placeholder');
+
+  socket.on('camera_frame', (data) => {
+    if (data && data.image) {
+      cameraFeed.src = 'data:image/jpeg;base64,' + data.image;
+      if (cameraPlaceholder) cameraPlaceholder.style.display = 'none';
+    }
+  });
+
+  // ===== Sensors =====
+  socket.on('sensor_data', (data) => {
+    if (!data) return;
+    updateSensorBadge('sensor-temp', data.temperature);
+    updateSensorBadge('sensor-humidity', data.humidity);
+    updateSensorBadge('sensor-distance', data.distance);
+    updateSensorBadge('sensor-battery', data.battery);
+    updateSensorBadge('sensor-light', data.light);
+  });
+
+  function updateSensorBadge(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const valSpan = el.querySelector('.value');
+    if (valSpan && value !== undefined && value !== null) {
+      valSpan.textContent = value;
+    }
+  }
+
+  // ===== Bluetooth Status =====
+  socket.on('bluetooth_status', (data) => {
+    if (data) {
+      addLog('Bluetooth: ' + (data.status || JSON.stringify(data)), 'info');
+    }
+  });
+
+  // ===== Motor Status =====
+  socket.on('motor_status', (data) => {
+    if (!data) return;
+    if (data.m1 !== undefined) {
+      document.getElementById('m1-speed').value = data.m1;
+      document.getElementById('m1-speed-val').textContent = data.m1;
+    }
+    if (data.m2 !== undefined) {
+      document.getElementById('m2-speed').value = data.m2;
+      document.getElementById('m2-speed-val').textContent = data.m2;
+    }
+  });
+
+  // ===== Movement Controls =====
+  const moveBtns = {
+    'F': document.getElementById('btn-fwd'),
+    'L': document.getElementById('btn-left'),
+    'S': document.getElementById('btn-stop'),
+    'R': document.getElementById('btn-right'),
+    'B': document.getElementById('btn-back')
+  };
+
+  let activeDirection = null;
+
+  function sendMove(dir) {
+    if (dir === 'S') {
+      socket.emit('move', { direction: 'S', speed: 0 });
+      activeDirection = null;
+      clearActiveButtons();
+      return;
+    }
+    const speed = parseInt(document.getElementById('global-speed').value) || 150;
+    socket.emit('move', { direction: dir, speed: speed });
+    activeDirection = dir;
+  }
+
+  function sendStop() {
+    socket.emit('move', { direction: 'S', speed: 0 });
+    activeDirection = null;
+    clearActiveButtons();
+  }
+
+  function clearActiveButtons() {
+    Object.values(moveBtns).forEach(btn => {
+      if (btn) btn.classList.remove('active');
+    });
+  }
+
+  function activateButton(dir) {
+    clearActiveButtons();
+    if (moveBtns[dir]) moveBtns[dir].classList.add('active');
+  }
+
+  // Touch + Mouse event binding for move buttons
+  Object.keys(moveBtns).forEach(dir => {
+    const btn = moveBtns[dir];
+    if (!btn) return;
+
+    // Touch events (CRITICAL: passive=false to allow preventDefault)
+    btn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if (dir === 'S') {
+        sendMove('S');
+      } else {
+        sendMove(dir);
+      }
+      activateButton(dir);
+    }, { passive: false });
+
+    btn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      sendStop();
+    }, { passive: false });
+
+    btn.addEventListener('touchcancel', function(e) {
+      e.preventDefault();
+      sendStop();
+    }, { passive: false });
+
+    // Mouse events
+    btn.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      if (dir === 'S') {
+        sendMove('S');
+      } else {
+        sendMove(dir);
+      }
+      activateButton(dir);
+    });
+
+    btn.addEventListener('mouseup', function(e) {
+      e.preventDefault();
+      sendStop();
+    });
+
+    btn.addEventListener('mouseleave', function(e) {
+      if (activeDirection === dir) {
+        sendStop();
+      }
+    });
+  });
+
+  // Keyboard support (WASD + Arrows)
+  const keyMap = {
+    'w': 'F', 'ArrowUp': 'F',
+    'a': 'L', 'ArrowLeft': 'L',
+    's': 'B', 'ArrowDown': 'B',
+    'd': 'R', 'ArrowRight': 'R',
+    ' ': 'S'
+  };
+  const keysDown = new Set();
+
+  document.addEventListener('keydown', (e) => {
+    const dir = keyMap[e.key];
+    if (!dir) return;
+    e.preventDefault();
+    if (keysDown.has(e.key)) return;
+    keysDown.add(e.key);
+    sendMove(dir);
+    activateButton(dir);
+  });
+
+  document.addEventListener('keyup', (e) => {
+    const dir = keyMap[e.key];
+    if (!dir) return;
+    e.preventDefault();
+    keysDown.delete(e.key);
+    // Check if any other key for same direction is still held
+    const stillActive = [...keysDown].some(k => keyMap[k] === dir);
+    if (!stillActive) {
+      sendStop();
+    }
+  });
+
+  // ===== Speed Sliders =====
+  const globalSpeedEl = document.getElementById('global-speed');
+  const globalSpeedVal = document.getElementById('global-speed-val');
+  const m1SpeedEl = document.getElementById('m1-speed');
+  const m1SpeedVal = document.getElementById('m1-speed-val');
+  const m2SpeedEl = document.getElementById('m2-speed');
+  const m2SpeedVal = document.getElementById('m2-speed-val');
+  const linkMotorsEl = document.getElementById('link-motors');
+
+  globalSpeedEl.addEventListener('input', () => {
+    globalSpeedVal.textContent = globalSpeedEl.value;
+    socket.emit('set_speed', { type: 'global', value: parseInt(globalSpeedEl.value) });
+  });
+
+  m1SpeedEl.addEventListener('input', () => {
+    const v = parseInt(m1SpeedEl.value);
+    m1SpeedVal.textContent = v;
+    if (linkMotorsEl.checked) {
+      m2SpeedEl.value = v;
+      m2SpeedVal.textContent = v;
+    }
+    socket.emit('set_speed', { type: 'motor', m1: parseInt(m1SpeedEl.value), m2: parseInt(m2SpeedEl.value) });
+  });
+
+  m2SpeedEl.addEventListener('input', () => {
+    const v = parseInt(m2SpeedEl.value);
+    m2SpeedVal.textContent = v;
+    if (linkMotorsEl.checked) {
+      m1SpeedEl.value = v;
+      m1SpeedVal.textContent = v;
+    }
+    socket.emit('set_speed', { type: 'motor', m1: parseInt(m1SpeedEl.value), m2: parseInt(m2SpeedEl.value) });
+  });
+
+  // ===== Servo Controls =====
+  const servoS1El = document.getElementById('servo-s1');
+  const s1AngleEl = document.getElementById('s1-angle');
+  const needle1 = document.getElementById('servo-needle-1');
+
+  const servoS2El = document.getElementById('servo-s2');
+  const s2AngleEl = document.getElementById('s2-angle');
+  const needle2 = document.getElementById('servo-needle-2');
+
+  function updateServoDial(needleEl, angle) {
+    // Map 0-180 to -90 to +90 degrees rotation
+    const rotation = angle - 90;
+    needleEl.style.transform = 'translateX(-50%) rotate(' + rotation + 'deg)';
+  }
+
+  servoS1El.addEventListener('input', () => {
+    const angle = parseInt(servoS1El.value);
+    s1AngleEl.textContent = angle + '°';
+    updateServoDial(needle1, angle);
+    socket.emit('set_servo', { servo: 1, angle: angle });
+  });
+
+  servoS2El.addEventListener('input', () => {
+    const angle = parseInt(servoS2El.value);
+    s2AngleEl.textContent = angle + '°';
+    updateServoDial(needle2, angle);
+    socket.emit('set_servo', { servo: 2, angle: angle });
+  });
+
+  // Initialize dials
+  updateServoDial(needle1, 90);
+  updateServoDial(needle2, 90);
+
+  // ===== Scenario =====
+  const scenarioList = document.getElementById('scenario-list');
+  const btnScenarioRun = document.getElementById('btn-scenario-run');
+  const btnScenarioStop = document.getElementById('btn-scenario-stop');
+  const progressBar = document.getElementById('scenario-progress');
+  const progressText = document.getElementById('scenario-progress-text');
+
+  // Request scenarios list on connect
+  socket.on('connect', () => {
+    socket.emit('get_scenarios');
+  });
+
+  socket.on('scenario_list', (data) => {
+    if (!data || !Array.isArray(data.scenarios)) return;
+    // Clear existing options except placeholder
+    while (scenarioList.options.length > 1) {
+      scenarioList.remove(1);
+    }
+    data.scenarios.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id || s.name;
+      opt.textContent = s.name || s.id;
+      scenarioList.appendChild(opt);
+    });
+  });
+
+  btnScenarioRun.addEventListener('click', () => {
+    const selected = scenarioList.value;
+    if (!selected) {
+      addLog('Please select a scenario first', 'warn');
+      return;
+    }
+    socket.emit('run_scenario', { scenario: selected });
+    progressBar.style.width = '0%';
+    progressText.textContent = 'Running...';
+    addLog('Running scenario: ' + selected, 'info');
+  });
+
+  btnScenarioStop.addEventListener('click', () => {
+    socket.emit('stop_scenario');
+    progressBar.style.width = '0%';
+    progressText.textContent = 'Stopped';
+    addLog('Scenario stopped', 'warn');
+  });
+
+  socket.on('scenario_progress', (data) => {
+    if (!data) return;
+    const pct = Math.min(100, Math.max(0, data.progress || 0));
+    progressBar.style.width = pct + '%';
+    if (data.message) {
+      progressText.textContent = data.message;
+    } else {
+      progressText.textContent = pct + '%';
+    }
+    if (pct >= 100) {
+      progressText.textContent = 'Completed';
+      addLog('Scenario completed', 'success');
+    }
+  });
+
+  // ===== Log Area =====
+  const logArea = document.getElementById('log-area');
+  const MAX_LOG_ENTRIES = 100;
+
+  function addLog(message, type) {
+    type = type || 'info';
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    const time = new Date().toLocaleTimeString();
+    entry.innerHTML = '<span class="log-time">[' + time + ']</span> ' +
+      '<span class="log-' + type + '">' + escapeHtml(message) + '</span>';
+    logArea.appendChild(entry);
+    // Trim old entries
+    while (logArea.children.length > MAX_LOG_ENTRIES) {
+      logArea.removeChild(logArea.firstChild);
+    }
+    logArea.scrollTop = logArea.scrollHeight;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Socket log/error events
+  socket.on('log', (data) => {
+    if (data && data.message) {
+      addLog(data.message, data.level || 'info');
+    }
+  });
+
+  socket.on('error', (data) => {
+    if (data && data.message) {
+      addLog('Error: ' + data.message, 'error');
+    } else if (typeof data === 'string') {
+      addLog('Error: ' + data, 'error');
+    }
+  });
+
+  // ===== Initialize =====
+  addLog('Robot Control Interface loaded', 'info');
+
+})();
+</script>
+</body>
+</html>

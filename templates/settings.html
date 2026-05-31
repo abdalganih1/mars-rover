@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚙️ إعدادات الروبوت</title>
+<style>
+:root {
+  --bg: #0a0a0a; --card: #161616; --card2: #1e1e1e;
+  --accent: #00b4d8; --accent2: #0077b6;
+  --success: #06d6a0; --danger: #ef476f; --warning: #ffd166;
+  --text: #e0e0e0; --text2: #888; --border: #333;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Segoe UI',Tahoma,sans-serif; min-height:100vh; }
+.header { background:linear-gradient(135deg,#0077b6,#00b4d8); padding:16px 24px; display:flex; justify-content:space-between; align-items:center; }
+.header h1 { font-size:1.4rem; color:#fff; }
+.header a { color:#fff; text-decoration:none; background:rgba(0,0,0,.3); padding:8px 16px; border-radius:8px; font-size:.9rem; }
+.container { max-width:900px; margin:0 auto; padding:16px; }
+.tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+.tab-btn { background:var(--card); border:1px solid var(--border); color:var(--text2); padding:10px 16px; border-radius:8px; cursor:pointer; font-size:.85rem; transition:.2s; }
+.tab-btn:hover,.tab-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:16px; }
+.card h3 { color:var(--accent); margin-bottom:16px; font-size:1.1rem; }
+.form-group { margin-bottom:14px; }
+.form-group label { display:block; margin-bottom:6px; font-size:.85rem; color:var(--text2); }
+.form-group input,.form-group select { width:100%; padding:10px 12px; background:var(--card2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.9rem; }
+.form-group input:focus,.form-group select:focus { outline:none; border-color:var(--accent); }
+.btn { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; font-size:.9rem; transition:.2s; margin:4px; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { background:var(--accent2); }
+.btn-success { background:var(--success); color:#000; }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn-warning { background:var(--warning); color:#000; }
+.btn-sm { padding:6px 12px; font-size:.8rem; }
+.btn:disabled { opacity:.5; cursor:not-allowed; }
+.row { display:flex; gap:12px; flex-wrap:wrap; }
+.row > * { flex:1; min-width:200px; }
+.device-list { max-height:300px; overflow-y:auto; }
+.device-item { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid var(--border); }
+.device-item:hover { background:var(--card2); }
+.device-info { font-size:.9rem; }
+.device-addr { color:var(--text2); font-size:.75rem; }
+.status-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-left:8px; }
+.status-dot.connected { background:var(--success); }
+.status-dot.disconnected { background:var(--danger); }
+.sensor-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media(max-width:600px) { .sensor-grid { grid-template-columns:1fr; } }
+.scenario-item { background:var(--card2); padding:12px; border-radius:8px; margin-bottom:8px; }
+.scenario-item h4 { color:var(--accent); margin-bottom:4px; }
+.toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:12px 24px; border-radius:8px; color:#fff; z-index:9999; font-size:.9rem; transition:.3s; opacity:0; }
+.toast.show { opacity:1; }
+.toast.success { background:var(--success); color:#000; }
+.toast.error { background:var(--danger); }
+.range-row { display:flex; align-items:center; gap:12px; }
+.range-row input[type=range] { flex:1; }
+.range-val { min-width:40px; text-align:center; font-weight:bold; color:var(--accent); }
+.checkbox-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.checkbox-row input[type=checkbox] { width:18px; height:18px; accent-color:var(--accent); }
+.save-bar { position:sticky; bottom:0; background:var(--bg); padding:12px 0; border-top:1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>⚙️ إعدادات الروبوت</h1>
+  <a href="/">🏠 الرئيسية</a>
+</div>
+<div class="container">
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="bluetooth">📡 البلوتوث</button>
+    <button class="tab-btn" data-tab="camera">📷 الكاميرا</button>
+    <button class="tab-btn" data-tab="motors">⚡ المحركات</button>
+    <button class="tab-btn" data-tab="sensors">🌡️ الحساسات</button>
+    <button class="tab-btn" data-tab="scenarios">🎬 السيناريوهات</button>
+    <button class="tab-btn" data-tab="general">🔧 عام</button>
+  </div>
+
+  <!-- البلوتوث -->
+  <div class="tab-content active" id="tab-bluetooth">
+    <div class="card">
+      <h3>📡 اتصال البلوتوث (HC-05)</h3>
+      <div class="form-group">
+        <label>المنفذ التسلسلي (Serial Port)</label>
+        <input type="text" id="bt-port" placeholder="/dev/rfcomm0" value="/dev/rfcomm0">
+      </div>
+      <div class="form-group">
+        <label>معدل البود (Baud Rate)</label>
+        <select id="bt-baud">
+          <option value="9600">9600</option>
+          <option value="19200">19200</option>
+          <option value="38400">38400</option>
+          <option value="57600">57600</option>
+          <option value="115200" selected>115200</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>مهلة الاتصال (ثواني)</label>
+        <input type="number" id="bt-timeout" value="5" min="1" max="30">
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="bt-autoconnect">
+        <label for="bt-autoconnect">اتصال تلقائي عند بدء التشغيل</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="bt-autoreconnect">
+        <label for="bt-autoreconnect">إعادة الاتصال تلقائياً عند الانقطاع</label>
+      </div>
+      <div class="form-group">
+        <label>عنوان MAC للجهاز (اختياري)</label>
+        <input type="text" id="bt-mac" placeholder="00:1A:7D:DA:71:13">
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn btn-primary" onclick="scanBluetooth()">🔍 بحث عن أجهزة</button>
+        <button class="btn btn-success" onclick="connectBluetooth()">🔗 اتصال</button>
+        <button class="btn btn-danger" onclick="disconnectBluetooth()">✂️ قطع الاتصال</button>
+      </div>
+      <div class="device-list" id="bt-devices" style="margin-top:16px">
+        <div style="text-align:center;color:var(--text2);padding:20px">اضغط بحث لاكتشاف الأجهزة</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📊 حالة الاتصال</h3>
+      <div id="bt-status" style="font-size:1.1rem">
+        <span class="status-dot disconnected"></span> غير متصل
+      </div>
+    </div>
+  </div>
+
+  <!-- الكاميرا -->
+  <div class="tab-content" id="tab-camera">
+    <div class="card">
+      <h3>📷 إعدادات الكاميرا (OpenCV)</h3>
+      <div class="form-group">
+        <label>فهرس الكاميرا</label>
+        <select id="cam-index">
+          <option value="0">0 - كاميرا افتراضية</option>
+          <option value="1">1 - USB كاميرا</option>
+          <option value="2">2 - كاميرا أخرى</option>
+        </select>
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>الدقة - العرض</label>
+          <input type="number" id="cam-width" value="640" min="160" max="1920">
+        </div>
+        <div class="form-group">
+          <label>الدقة - الارتفاع</label>
+          <input type="number" id="cam-height" value="480" min="120" max="1080">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>معدل الإطارات (FPS)</label>
+        <select id="cam-fps">
+          <option value="10">10 FPS</option>
+          <option value="15">15 FPS</option>
+          <option value="20" selected>20 FPS</option>
+          <option value="30">30 FPS</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>جودة JPEG (1-100)</label>
+        <div class="range-row">
+          <input type="range" id="cam-quality" min="10" max="100" value="70">
+          <span class="range-val" id="cam-quality-val">70</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🎨 مرشحات الصورة</h3>
+      <div class="form-group">
+        <label>نظام الألوان</label>
+        <select id="cam-color-mode">
+          <option value="rgb">RGB (ألوان طبيعية)</option>
+          <option value="bgr">BGR (ألوان معكوسة)</option>
+          <option value="gray">رمادي (أبيض وأسود)</option>
+          <option value="hsv">HSV</option>
+          <option value="lab">LAB</option>
+        </select>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="cam-rotate">
+        <label for="cam-rotate">تدوير 180°</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="cam-flip-h">
+        <label for="cam-flip-h">انعكاس أفقي</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="cam-flip-v">
+        <label for="cam-flip-v">انعكاس عمودي</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="cam-edge">
+        <label for="cam-edge">كشف الحواف (Canny)</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="cam-threshold">
+        <label for="cam-threshold">عتبة ثنائية (Threshold)</label>
+      </div>
+    </div>
+    <div class="card">
+      <h3>☀️ ضبط السطوع والتباين</h3>
+      <div class="form-group">
+        <label>السطوع</label>
+        <div class="range-row">
+          <input type="range" id="cam-brightness" min="-100" max="100" value="0">
+          <span class="range-val" id="cam-brightness-val">0</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>التباين</label>
+        <div class="range-row">
+          <input type="range" id="cam-contrast" min="-100" max="100" value="0">
+          <span class="range-val" id="cam-contrast-val">0</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>التشبع</label>
+        <div class="range-row">
+          <input type="range" id="cam-saturation" min="0" max="200" value="100">
+          <span class="range-val" id="cam-saturation-val">100</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- المحركات -->
+  <div class="tab-content" id="tab-motors">
+    <div class="card">
+      <h3>⚡ محركات DC</h3>
+      <div class="form-group">
+        <label>السرعة الافتراضية (0-255)</label>
+        <div class="range-row">
+          <input type="range" id="mot-default-speed" min="0" max="255" value="150">
+          <span class="range-val" id="mot-default-speed-val">150</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>الحد الأدنى للسرعة</label>
+        <input type="number" id="mot-min-speed" value="50" min="0" max="255">
+      </div>
+      <div class="form-group">
+        <label>مدة التسارع (مللي ثانية)</label>
+        <input type="number" id="mot-ramp-duration" value="500" min="0" max="5000">
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="mot-invert-m1">
+        <label for="mot-invert-m1">عكس اتجاه المحرك M1</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="mot-invert-m2">
+        <label for="mot-invert-m2">عكس اتجاه المحرك M2</label>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔄 محركات السيرفو</h3>
+      <div class="form-group">
+        <label>زاوية الوسط (Center) لـ S1</label>
+        <div class="range-row">
+          <input type="range" id="servo1-center" min="0" max="180" value="90">
+          <span class="range-val" id="servo1-center-val">90°</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>زاوية الوسط (Center) لـ S2</label>
+        <div class="range-row">
+          <input type="range" id="servo2-center" min="0" max="180" value="90">
+          <span class="range-val" id="servo2-center-val">90°</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>أقل زاوية S1</label>
+          <input type="number" id="servo1-min" value="0" min="0" max="180">
+        </div>
+        <div class="form-group">
+          <label>أعلى زاوية S1</label>
+          <input type="number" id="servo1-max" value="180" min="0" max="180">
+        </div>
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>أقل زاوية S2</label>
+          <input type="number" id="servo2-min" value="0" min="0" max="180">
+        </div>
+        <div class="form-group">
+          <label>أعلى زاوية S2</label>
+          <input type="number" id="servo2-max" value="180" min="0" max="180">
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn btn-primary btn-sm" onclick="testServo('s1')">🔄 اختبار S1</button>
+        <button class="btn btn-primary btn-sm" onclick="testServo('s2')">🔄 اختبار S2</button>
+        <button class="btn btn-warning btn-sm" onclick="centerServos()">⏺️ توسيط الكل</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- الحساسات -->
+  <div class="tab-content" id="tab-sensors">
+    <div class="card">
+      <h3>🌡️ إدارة الحساسات</h3>
+      <div id="sensor-list" class="sensor-grid"></div>
+      <div style="margin-top:16px">
+        <button class="btn btn-success" onclick="showAddSensor()">➕ إضافة حساس جديد</button>
+      </div>
+    </div>
+    <div class="card" id="add-sensor-form" style="display:none">
+      <h3>➕ إضافة حساس جديد</h3>
+      <div class="row">
+        <div class="form-group">
+          <label>رمز الحرف (مثلاً: T)</label>
+          <input type="text" id="new-sensor-code" maxlength="1" placeholder="T" style="text-transform:uppercase">
+        </div>
+        <div class="form-group">
+          <label>اسم الحساس</label>
+          <input type="text" id="new-sensor-name" placeholder="الحرارة">
+        </div>
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>الوحدة</label>
+          <input type="text" id="new-sensor-unit" placeholder="°C">
+        </div>
+        <div class="form-group">
+          <label>الأيقونة (emoji)</label>
+          <input type="text" id="new-sensor-icon" placeholder="🌡️">
+        </div>
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>أقل قيمة</label>
+          <input type="number" id="new-sensor-min" value="0">
+        </div>
+        <div class="form-group">
+          <label>أعلى قيمة</label>
+          <input type="number" id="new-sensor-max" value="100">
+        </div>
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>تحذير مرتفع</label>
+          <input type="number" id="new-sensor-warn-high" value="80">
+        </div>
+        <div class="form-group">
+          <label>تحذير منخفض</label>
+          <input type="number" id="new-sensor-warn-low" value="10">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>اللون</label>
+        <input type="color" id="new-sensor-color" value="#00b4d8">
+      </div>
+      <button class="btn btn-success" onclick="addSensor()">💾 حفظ</button>
+      <button class="btn btn-danger btn-sm" onclick="hideAddSensor()">❌ إلغاء</button>
+    </div>
+  </div>
+
+  <!-- السيناريوهات -->
+  <div class="tab-content" id="tab-scenarios">
+    <div class="card">
+      <h3>🎬 السيناريوهات المحفوظة</h3>
+      <div id="scenario-list"></div>
+      <div style="margin-top:12px">
+        <button class="btn btn-primary" onclick="refreshScenarios()">🔄 تحديث</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>➕ إنشاء سيناريو جديد</h3>
+      <div class="form-group">
+        <label>اسم السيناريو</label>
+        <input type="text" id="scenario-name" placeholder="اسم السيناريو">
+      </div>
+      <div class="form-group">
+        <label>الوصف</label>
+        <input type="text" id="scenario-desc" placeholder="وصف مختصر">
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="scenario-loop">
+        <label for="scenario-loop">تكرار مستمر (Loop)</label>
+      </div>
+      <div class="form-group">
+        <label>الخطوات (JSON)</label>
+        <textarea id="scenario-steps" rows="6" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-family:monospace;font-size:.85rem" placeholder='[
+  {"m1": 150, "m2": 150, "s1": 90, "s2": 90, "duration": 1000},
+  {"m1": 0, "m2": 0, "s1": 45, "s2": 135, "duration": 500},
+  {"m1": -100, "m2": -100, "s1": 90, "s2": 90, "duration": 800}
+]'></textarea>
+      </div>
+      <button class="btn btn-success" onclick="saveScenario()">💾 حفظ السيناريو</button>
+    </div>
+  </div>
+
+  <!-- عام -->
+  <div class="tab-content" id="tab-general">
+    <div class="card">
+      <h3>🔧 إعدادات عامة</h3>
+      <div class="form-group">
+        <label>منفذ الخادم</label>
+        <input type="number" id="gen-port" value="5000" min="1024" max="65535">
+      </div>
+      <div class="form-group">
+        <label>مستوى السجل (Log Level)</label>
+        <select id="gen-log-level">
+          <option value="DEBUG">DEBUG</option>
+          <option value="INFO" selected>INFO</option>
+          <option value="WARNING">WARNING</option>
+          <option value="ERROR">ERROR</option>
+        </select>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="gen-auto-start-camera">
+        <label for="gen-auto-start-camera">تشغيل الكاميرا تلقائياً</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="gen-auto-connect-bt">
+        <label for="gen-auto-connect-bt">اتصال تلقائي بالبلوتوث</label>
+      </div>
+    </div>
+    <div class="card">
+      <h3>💾 تصدير واستيراد</h3>
+      <button class="btn btn-primary" onclick="exportSettings()">📤 تصدير الإعدادات</button>
+      <button class="btn btn-warning" onclick="document.getElementById('import-file').click()">📥 استيراد الإعدادات</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importSettings(event)">
+      <button class="btn btn-danger" onclick="resetSettings()">🗑️ إعادة تعيين</button>
+    </div>
+  </div>
+
+  <div class="save-bar">
+    <button class="btn btn-success" onclick="saveAllSettings()" style="width:100%">💾 حفظ جميع الإعدادات</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+const socket = io();
+
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// Range sliders
+document.querySelectorAll('input[type=range]').forEach(r => {
+  const valEl = document.getElementById(r.id + '-val');
+  if (valEl) {
+    r.addEventListener('input', () => {
+      let v = r.value;
+      if (r.id.includes('servo') && r.id.includes('center')) v += '°';
+      valEl.textContent = v;
+    });
+  }
+});
+
+// Toast
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// Bluetooth
+function scanBluetooth() {
+  socket.emit('bluetooth_scan');
+  document.getElementById('bt-devices').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2)">🔍 جاري البحث...</div>';
+}
+function connectBluetooth() {
+  const port = document.getElementById('bt-port').value;
+  const baud = parseInt(document.getElementById('bt-baud').value);
+  socket.emit('bluetooth_connect', { port, baud });
+  showToast('جاري الاتصال...', 'success');
+}
+function disconnectBluetooth() {
+  socket.emit('bluetooth_disconnect');
+  showToast('تم قطع الاتصال', 'error');
+}
+
+socket.on('bluetooth_devices', (devices) => {
+  const el = document.getElementById('bt-devices');
+  if (!devices.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2)">لم يتم العثور على أجهزة</div>'; return; }
+  el.innerHTML = devices.map(d => `<div class="device-item"><div><div class="device-info">${d.name || 'مجهول'}</div><div class="device-addr">${d.address}</div></div><button class="btn btn-primary btn-sm" onclick="socket.emit('bluetooth_connect',{mac:'${d.address}'})">🔗 اتصال</button></div>`).join('');
+});
+
+socket.on('bluetooth_status', (data) => {
+  const el = document.getElementById('bt-status');
+  const cls = data.connected ? 'connected' : 'disconnected';
+  const text = data.connected ? 'متصل ✅' : 'غير متصل ❌';
+  el.innerHTML = `<span class="status-dot ${cls}"></span> ${text}`;
+  if (data.connected) showToast('تم الاتصال بنجاح! 🎉');
+});
+
+// Sensors
+function showAddSensor() { document.getElementById('add-sensor-form').style.display = 'block'; }
+function hideAddSensor() { document.getElementById('add-sensor-form').style.display = 'none'; }
+
+function addSensor() {
+  const code = document.getElementById('new-sensor-code').value.toUpperCase();
+  if (!code || code.length !== 1) { showToast('رمز الحرف مطلوب (حرف واحد)', 'error'); return; }
+  const data = {
+    code, name: document.getElementById('new-sensor-name').value,
+    unit: document.getElementById('new-sensor-unit').value,
+    icon: document.getElementById('new-sensor-icon').value,
+    min_val: parseFloat(document.getElementById('new-sensor-min').value),
+    max_val: parseFloat(document.getElementById('new-sensor-max').value),
+    warn_high: parseFloat(document.getElementById('new-sensor-warn-high').value),
+    warn_low: parseFloat(document.getElementById('new-sensor-warn-low').value),
+    color: document.getElementById('new-sensor-color').value
+  };
+  socket.emit('sensor_add', data);
+  showToast('تم إضافة الحساس: ' + code);
+  hideAddSensor();
+}
+
+socket.on('sensor_list', (sensors) => {
+  const el = document.getElementById('sensor-list');
+  el.innerHTML = sensors.map(s => `
+    <div class="card" style="margin-bottom:8px;padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong>${s.icon} ${s.name}</strong> <span style="color:var(--text2)">[${s.code}]</span></div>
+        <button class="btn btn-danger btn-sm" onclick="socket.emit('sensor_remove','${s.code}')">🗑️</button>
+      </div>
+      <div style="color:var(--text2);font-size:.8rem;margin-top:4px">${s.min_val} - ${s.max_val} ${s.unit} | تحذير: <${s.warn_low} >${s.warn_high}</div>
+    </div>`).join('');
+});
+
+// Scenarios
+function refreshScenarios() { socket.emit('get_scenarios'); }
+
+socket.on('scenario_list', (list) => {
+  const el = document.getElementById('scenario-list');
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;color:var(--text2);padding:20px">لا توجد سيناريوهات محفوظة</div>'; return; }
+  el.innerHTML = list.map(s => `
+    <div class="scenario-item">
+      <h4>${s.name}</h4>
+      <p style="color:var(--text2);font-size:.85rem">${s.description || ''}</p>
+      <div style="margin-top:8px">
+        <button class="btn btn-success btn-sm" onclick="socket.emit('run_scenario','${s.name}')">▶️ تشغيل</button>
+        <button class="btn btn-danger btn-sm" onclick="socket.emit('delete_scenario','${s.name}')">🗑️ حذف</button>
+      </div>
+    </div>`).join('');
+});
+
+function saveScenario() {
+  const name = document.getElementById('scenario-name').value;
+  if (!name) { showToast('يجب إدخال اسم السيناريو', 'error'); return; }
+  try {
+    const steps = JSON.parse(document.getElementById('scenario-steps').value || '[]');
+    socket.emit('create_scenario', {
+      name, description: document.getElementById('scenario-desc').value,
+      steps, loop: document.getElementById('scenario-loop').checked
+    });
+    showToast('تم حفظ السيناريو: ' + name);
+  } catch(e) { showToast('خطأ في JSON: ' + e.message, 'error'); }
+}
+
+// Servo test
+function testServo(s) {
+  const angle = parseInt(document.getElementById(s === 's1' ? 'servo1-center' : 'servo2-center').value);
+  socket.emit('set_servo', { s1: s === 's1' ? angle : null, s2: s === 's2' ? angle : null });
+  showToast(`اختبار ${s}: ${angle}°`);
+}
+function centerServos() { socket.emit('set_servo', { s1: 90, s2: 90 }); showToast('تم توسيط السيرفو'); }
+
+// Save all
+function saveAllSettings() {
+  const settings = {
+    bluetooth: {
+      port: document.getElementById('bt-port').value,
+      baud_rate: parseInt(document.getElementById('bt-baud').value),
+      timeout: parseInt(document.getElementById('bt-timeout').value),
+      auto_connect: document.getElementById('bt-autoconnect').checked,
+      auto_reconnect: document.getElementById('bt-autoreconnect').checked,
+      mac_address: document.getElementById('bt-mac').value
+    },
+    camera: {
+      index: parseInt(document.getElementById('cam-index').value),
+      width: parseInt(document.getElementById('cam-width').value),
+      height: parseInt(document.getElementById('cam-height').value),
+      fps: parseInt(document.getElementById('cam-fps').value),
+      quality: parseInt(document.getElementById('cam-quality').value),
+      color_mode: document.getElementById('cam-color-mode').value,
+      rotate_180: document.getElementById('cam-rotate').checked,
+      flip_h: document.getElementById('cam-flip-h').checked,
+      flip_v: document.getElementById('cam-flip-v').checked,
+      edge_detection: document.getElementById('cam-edge').checked,
+      threshold: document.getElementById('cam-threshold').checked,
+      brightness: parseInt(document.getElementById('cam-brightness').value),
+      contrast: parseInt(document.getElementById('cam-contrast').value),
+      saturation: parseInt(document.getElementById('cam-saturation').value)
+    },
+    motors: {
+      default_speed: parseInt(document.getElementById('mot-default-speed').value),
+      min_speed: parseInt(document.getElementById('mot-min-speed').value),
+      ramp_duration: parseInt(document.getElementById('mot-ramp-duration').value),
+      invert_m1: document.getElementById('mot-invert-m1').checked,
+      invert_m2: document.getElementById('mot-invert-m2').checked,
+      servo1_center: parseInt(document.getElementById('servo1-center').value),
+      servo2_center: parseInt(document.getElementById('servo2-center').value),
+      servo1_min: parseInt(document.getElementById('servo1-min').value),
+      servo1_max: parseInt(document.getElementById('servo1-max').value),
+      servo2_min: parseInt(document.getElementById('servo2-min').value),
+      servo2_max: parseInt(document.getElementById('servo2-max').value)
+    },
+    general: {
+      port: parseInt(document.getElementById('gen-port').value),
+      log_level: document.getElementById('gen-log-level').value,
+      auto_start_camera: document.getElementById('gen-auto-start-camera').checked,
+      auto_connect_bluetooth: document.getElementById('gen-auto-connect-bt').checked
+    }
+  };
+  socket.emit('save_settings', settings);
+  showToast('✅ تم حفظ جميع الإعدادات');
+}
+
+function exportSettings() {
+  socket.emit('export_settings');
+}
+socket.on('settings_exported', (data) => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'robot_settings.json';
+  a.click();
+  showToast('تم تصدير الإعدادات');
+});
+
+function importSettings(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      socket.emit('import_settings', data);
+      showToast('تم استيراد الإعدادات');
+      loadSettings(data);
+    } catch(err) { showToast('خطأ في الملف', 'error'); }
+  };
+  reader.readAsText(file);
+}
+
+function resetSettings() {
+  if (confirm('هل أنت متأكد من إعادة التعيين؟')) {
+    socket.emit('reset_settings');
+    showToast('تم إعادة التعيين');
+  }
+}
+
+function loadSettings(s) {
+  if (!s) return;
+  const bt = s.bluetooth || {};
+  document.getElementById('bt-port').value = bt.port || '/dev/rfcomm0';
+  document.getElementById('bt-baud').value = bt.baud_rate || 115200;
+  document.getElementById('bt-timeout').value = bt.timeout || 5;
+  document.getElementById('bt-autoconnect').checked = bt.auto_connect || false;
+  document.getElementById('bt-autoreconnect').checked = bt.auto_reconnect || false;
+  document.getElementById('bt-mac').value = bt.mac_address || '';
+
+  const cam = s.camera || {};
+  document.getElementById('cam-index').value = cam.index || 0;
+  document.getElementById('cam-width').value = cam.width || 640;
+  document.getElementById('cam-height').value = cam.height || 480;
+  document.getElementById('cam-fps').value = cam.fps || 20;
+  document.getElementById('cam-quality').value = cam.quality || 70;
+  document.getElementById('cam-color-mode').value = cam.color_mode || 'rgb';
+  document.getElementById('cam-rotate').checked = cam.rotate_180 || false;
+  document.getElementById('cam-flip-h').checked = cam.flip_h || false;
+  document.getElementById('cam-flip-v').checked = cam.flip_v || false;
+  document.getElementById('cam-edge').checked = cam.edge_detection || false;
+  document.getElementById('cam-threshold').checked = cam.threshold || false;
+  document.getElementById('cam-brightness').value = cam.brightness || 0;
+  document.getElementById('cam-contrast').value = cam.contrast || 0;
+  document.getElementById('cam-saturation').value = cam.saturation || 100;
+
+  const mot = s.motors || {};
+  document.getElementById('mot-default-speed').value = mot.default_speed || 150;
+  document.getElementById('mot-min-speed').value = mot.min_speed || 50;
+  document.getElementById('mot-ramp-duration').value = mot.ramp_duration || 500;
+  document.getElementById('mot-invert-m1').checked = mot.invert_m1 || false;
+  document.getElementById('mot-invert-m2').checked = mot.invert_m2 || false;
+  document.getElementById('servo1-center').value = mot.servo1_center || 90;
+  document.getElementById('servo2-center').value = mot.servo2_center || 90;
+  document.getElementById('servo1-min').value = mot.servo1_min || 0;
+  document.getElementById('servo1-max').value = mot.servo1_max || 180;
+  document.getElementById('servo2-min').value = mot.servo2_min || 0;
+  document.getElementById('servo2-max').value = mot.servo2_max || 180;
+
+  const gen = s.general || {};
+  document.getElementById('gen-port').value = gen.port || 5000;
+  document.getElementById('gen-log-level').value = gen.log_level || 'INFO';
+  document.getElementById('gen-auto-start-camera').checked = gen.auto_start_camera || false;
+  document.getElementById('gen-auto-connect-bt').checked = gen.auto_connect_bluetooth || false;
+}
+
+// Init
+socket.on('connect', () => {
+  socket.emit('get_settings');
+  socket.emit('get_scenarios');
+});
+socket.on('settings_loaded', loadSettings);
+socket.on('error', (msg) => showToast(msg, 'error'));
+</script>
+</body>
+</html>
